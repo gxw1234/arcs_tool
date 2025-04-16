@@ -14,7 +14,8 @@
 #include <QThread>
 #include "smartpowercontroller.h"
 #include <QTableWidget>
-
+#include <QTextEdit>
+#include "testthread.h"
 
 class MainWindow : public QMainWindow
 {
@@ -34,6 +35,7 @@ private slots:
     void combo_changed_8(int index);
     void start_test_content_11();
     void start_test_content_12();
+    void start_test_content();
     
 private:
     void setupUi();
@@ -68,7 +70,9 @@ private:
     QTimer *statusTimer;
     SmartPowerController *powerController;
     QTableWidget *table_widget;
-
+    QPushButton *start_test;
+    QTextEdit *show_log;
+    TestThread *test_thread;
 
 
 };

@@ -12,10 +12,12 @@ INCLUDEPATH += $$PWD/lib
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    smartpowercontroller.cpp
+    smartpowercontroller.cpp \
+    testthread.cpp
 
 HEADERS += \
     mainwindow.h \
-    smartpowercontroller.h
+    smartpowercontroller.h \
+    testthread.h
 
 

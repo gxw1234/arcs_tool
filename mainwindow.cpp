@@ -14,7 +14,7 @@
 
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent), test_thread(nullptr)
 {
     
     setWindowTitle("test_tool");
@@ -22,16 +22,15 @@ MainWindow::MainWindow(QWidget *parent)
     powerController = SmartPowerController::getInstance();
     setupUi_();
     // initSmartPowerDevice();
-
     // QTimer *timer = new QTimer(this);
     // connect(timer, &QTimer::timeout, this, &MainWindow::updateTime);
     // timer->start(1000);
 
     // statusTimer = new QTimer(this);
     // connect(statusTimer, &QTimer::timeout, this, &MainWindow::updateDeviceStatus);
-    
     // // 初始更新时间
     // updateTime();
+
 }
 
 MainWindow::~MainWindow()
@@ -41,9 +40,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupUi_()
 {
+
     centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
+
+
+
+
     
     QStringList list_test = {"烧录","检测adb设备", "wifi扫描", "adb_push_pull", "自播自录MIC检测", "EMMC检测", "背光检测", "OCR检测", "效准触摸","未连接wifi功耗","扫描功耗","息屏的功耗","连接wifi功耗"};
     
@@ -146,6 +150,13 @@ void MainWindow::setupUi_()
     }
     
     mainLayout->addWidget(table_widget);
+
+    show_log = new QTextEdit(this);
+    mainLayout->addWidget(show_log);
+
+    start_test = new QPushButton("开始测试", this);
+    connect(start_test, &QPushButton::clicked, this, &MainWindow::start_test_content);
+    mainLayout->addWidget(start_test);
 }
 
 
@@ -414,4 +425,43 @@ void MainWindow::start_test_content_12()
     qDebug() << "执行息屏操作";
     // 在这里添加息屏的具体实现
     // 可以通过adb命令或其他方式控制设备息屏
+}
+
+// 开始测试按钮点击处理函数
+void MainWindow::start_test_content()
+{
+    qDebug() << "开始测试";
+    
+    // 如果有正在运行的测试线程，先停止它
+    if (test_thread && test_thread->isRunning()) {
+        test_thread->requestStop();
+        test_thread->wait();
+        delete test_thread;
+        test_thread = nullptr;
+    }
+    
+    // 创建新的测试线程
+    test_thread = new TestThread(table_widget, this);
+    
+    // 连接信号到槽
+    connect(test_thread, &TestThread::updateLog, this, [this](const QString &message) {
+        // 更新日志输出到QTextEdit
+        show_log->append(message);
+    });
+    
+    connect(test_thread, &TestThread::finished, this, [this]() {
+        // 线程结束后的清理工作
+        if (test_thread) {
+            test_thread->deleteLater();
+            test_thread = nullptr;
+        }
+        show_log->append("测试线程已完成");
+    });
+    
+    // 启动线程
+    test_thread->start();
+    
+    // 更新UI状态
+    start_test->setEnabled(false);
+    show_log->append("测试已开始，请等待...");
 }
