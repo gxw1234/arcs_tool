@@ -2,7 +2,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 DESTDIR = $$PWD/bin
-TARGET = test_tool
+TARGET = SimpleQtApp
 TEMPLATE = app
 
 # 添加SmartPower库支持
@@ -11,9 +11,11 @@ INCLUDEPATH += $$PWD/lib
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    smartpowercontroller.cpp
 
 HEADERS += \
-    mainwindow.h
+    mainwindow.h \
+    smartpowercontroller.h
 
 

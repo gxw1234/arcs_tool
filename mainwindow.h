@@ -12,7 +12,9 @@
 #include <QTimer>
 #include <QDateTime>
 #include <QThread>
-#include "lib/smartpower.h"
+#include "smartpowercontroller.h"
+#include <QTableWidget>
+
 
 class MainWindow : public QMainWindow
 {
@@ -28,13 +30,19 @@ private slots:
     void onOutputOnButtonClicked();
     void onOutputOffButtonClicked();
     void updateDeviceStatus();
+    void combo_changed_5(int index);
+    void combo_changed_8(int index);
+    void start_test_content_11();
+    void start_test_content_12();
     
 private:
     void setupUi();
+    void setupUi_();
     void initSmartPowerDevice();
-    void disconnectDevice();
     
 private:
+
+
     // UI 组件
     QWidget *centralWidget;
     QLabel *timeLabel;
@@ -56,14 +64,13 @@ private:
     QLabel *currentLabel;
     QLabel *bncLabel;
     
-    // SmartPower 设备状态
-    bool deviceConnected;
-    int deviceCount;
-    QTimer *statusTimer;
     
-    // 保存上次的设置值
-    double lastVoltage;
-    double lastCurrent;
+    QTimer *statusTimer;
+    SmartPowerController *powerController;
+    QTableWidget *table_widget;
+
+
+
 };
 
 #endif // MAINWINDOW_H
