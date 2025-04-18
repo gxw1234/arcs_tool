@@ -1,10 +1,10 @@
 #include "smartpowercontroller.h"
 #include <QDebug>
 
-// 初始化静态实例
+
 SmartPowerController* SmartPowerController::instance = nullptr;
 
-// 获取单例实例
+
 SmartPowerController* SmartPowerController::getInstance()
 {
     if (instance == nullptr) {
@@ -13,7 +13,7 @@ SmartPowerController* SmartPowerController::getInstance()
     return instance;
 }
 
-// 构造函数
+
 SmartPowerController::SmartPowerController()
     : status(NotConnected),
       connected(false),
@@ -24,10 +24,10 @@ SmartPowerController::SmartPowerController()
     setStatus(NotConnected, "未连接");
 }
 
-// 析构函数
+
 SmartPowerController::~SmartPowerController()
 {
-    // 确保断开连接
+
     if (connected) {
         disconnectDevice();
     }

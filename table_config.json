@@ -1,0 +1,162 @@
+{
+    "columns": ["测试项目", "测试模式", "测试内容", "进度", "结果", "备注"],
+    "columnWidths": [300, 100, 650, 150, 150, 350],
+    "rows": [
+        {
+            "name": "烧录",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "result": {
+                "type": "combo",
+                "items": ["正常", "异常"],
+                "default": 1
+            },
+            "note": ""
+        },
+        {
+            "name": "检测adb设备",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "result": {
+                "type": "combo",
+                "items": ["正常", "异常"],
+                "default": 1
+            },
+            "note": ""
+        },
+        {
+            "name": "wifi扫描",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "result": {
+                "type": "combo",
+                "items": ["正常", "异常"],
+                "default": 1
+            },
+            "note": ""
+        },
+        {
+            "name": "adb_push_pull",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "result": {
+                "type": "combo",
+                "items": ["正常", "异常"],
+                "default": 1
+            },
+            "note": ""
+        },
+        {
+            "name": "自播自录MIC检测",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "result": {
+                "type": "combo",
+                "items": ["正常", "异常"],
+                "default": 1
+            },
+            "note": ""
+        },
+        {
+            "name": "EMMC检测",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "result": {
+                "type": "combo",
+                "items": ["正常", "异常"],
+                "default": 1
+            },
+            "note": ""
+        },
+        {
+            "name": "背光检测",
+            "mode": "手动",
+            "content": "手动调节背光检测背光变化",
+            "progress": "",
+            "result": {
+                "type": "combo",
+                "items": ["正常", "异常"],
+                "default": 1
+            },
+            "note": ""
+        },
+        {
+            "name": "OCR检测",
+            "mode": "手动",
+            "content": "请扫描，观察灯光，OCR，TTS 翻译",
+            "progress": "",
+            "result": {
+                "type": "combo",
+                "items": ["正常", "异常"],
+                "default": 1
+            },
+            "note": ""
+        },
+        {
+            "name": "效准触摸",
+            "mode": "手动",
+            "content": "进入效准，请效准",
+            "progress": "",
+            "result": {
+                "type": "combo",
+                "items": ["正常", "异常"],
+                "default": 1
+            },
+            "note": ""
+        },
+        {
+            "name": "未连接wifi功耗",
+            "mode": "手动",
+            "content": "查看静态功耗 标准在208MA左右 正负5MA,比208小也算正常",
+            "progress": "",
+            "result": {
+                "type": "combo",
+                "items": ["正常", "异常"],
+                "default": 1
+            },
+            "note": ""
+        },
+        {
+            "name": "扫描功耗",
+            "mode": "手动",
+            "content": "扫描时的功耗",
+            "progress": "",
+            "result": {
+                "type": "combo",
+                "items": ["正常", "异常"],
+                "default": 1
+            },
+            "note": ""
+        },
+        {
+            "name": "息屏的功耗",
+            "mode": "手动",
+            "content": "查看息屏功耗 80 正负10",
+            "progress": "",
+            "result": {
+                "type": "combo",
+                "items": ["正常", "异常"],
+                "default": 1
+            },
+            "note": ""
+        },
+        {
+            "name": "连接wifi功耗",
+            "mode": "手动",
+            "content": "查看连接wifi功耗 功耗105 正负10 ，有心跳包",
+            "progress": "",
+            "result": {
+                "type": "combo",
+                "items": ["正常", "异常"],
+                "default": 1
+            },
+            "note": ""
+        }
+    ]
+}

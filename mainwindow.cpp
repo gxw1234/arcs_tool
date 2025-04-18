@@ -3,6 +3,7 @@
 #include <QMessageBox>
 #include <QDoubleValidator>
 #include <QDebug>
+#include <QKeyEvent>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
@@ -11,17 +12,22 @@
 #include <QPushButton>
 #include <QStringList>
 #include <QTableWidgetItem>
-
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QJsonValue>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), test_thread(nullptr)
+    : QMainWindow(parent), statusTimer(nullptr), powerController(nullptr), test_thread(nullptr)
 {
+    // 安装事件过滤器，捕获整个应用程序的回车键
+    qApp->installEventFilter(this);
     
     setWindowTitle("test_tool");
     resize(600, 500);
     powerController = SmartPowerController::getInstance();
     setupUi_();
-    // initSmartPowerDevice();
+    initSmartPowerDevice();
     // QTimer *timer = new QTimer(this);
     // connect(timer, &QTimer::timeout, this, &MainWindow::updateTime);
     // timer->start(1000);
@@ -40,121 +46,112 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupUi_()
 {
-
+    setWindowTitle("test_tool 1.1");
+    // 创建中心部件和主布局
     centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
 
+    // 从JSON文件加载表格配置
+    QFile configFile("d:/py/qtqbj/table_config.json");
+    if (!configFile.open(QIODevice::ReadOnly)) {
+        qWarning("无法打开表格配置文件!");
+        show_log->append("错误: 无法打开配置文件 d:/py/qtqbj/table_config.json");
+        return;
+    }
+
+    QByteArray configData = configFile.readAll();
+    configFile.close();
+
+    QJsonParseError jsonError;
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(configData, &jsonError);
+    if (jsonError.error != QJsonParseError::NoError) {
+        qWarning("JSON解析错误: %s", qPrintable(jsonError.errorString()));
+        show_log->append(QString("JSON解析错误: %1").arg(jsonError.errorString()));
+        return;
+    }
+
+    QJsonObject jsonObj = jsonDoc.object();
+    QJsonArray columnsArray = jsonObj["columns"].toArray();
+    QJsonArray columnWidthsArray = jsonObj["columnWidths"].toArray();
+    QStringList headerLabels;
+    for (const QJsonValue &val : columnsArray) {
+        headerLabels << val.toString();
+    }
+    QJsonArray rowsArray = jsonObj["rows"].toArray();
+
+    table_widget = new QTableWidget(rowsArray.size(), headerLabels.size(), this);
+    table_widget->setHorizontalHeaderLabels(headerLabels);
+    resize(1800, 900);
+
+    for (int i = 0; i < qMin(columnWidthsArray.size(), headerLabels.size()); i++) {
+        table_widget->setColumnWidth(i, columnWidthsArray[i].toInt());
+    }
 
 
-
-    
-    QStringList list_test = {"烧录","检测adb设备", "wifi扫描", "adb_push_pull", "自播自录MIC检测", "EMMC检测", "背光检测", "OCR检测", "效准触摸","未连接wifi功耗","扫描功耗","息屏的功耗","连接wifi功耗"};
-    
-    table_widget = new QTableWidget(list_test.size(), 6, this);
-    table_widget->setHorizontalHeaderLabels({"测试项目", "测试模式", "测试内容", "进度", "结果", "备注"});
-
-    resize(1800,900);
-    // 设置表格的列宽
-    table_widget->setColumnWidth(0, 300);   // ID 列宽
-    table_widget->setColumnWidth(1, 100);  // 文本列宽
-    table_widget->setColumnWidth(2, 650);  // 状态列宽
-    table_widget->setColumnWidth(3, 150);  // 备注列宽
-    table_widget->setColumnWidth(4, 150);  // 备注列宽
-    table_widget->setColumnWidth(5, 350);  // 备注列宽
-
-    QString text_1 = "自动";
-    QString text_2 = "手动";
-    
-    for (int row_ = 0; row_ < list_test.size(); row_++) {
-        // 设置 ID 列的文本
-        QTableWidgetItem *id_item = new QTableWidgetItem(QString(" %1").arg(list_test[row_]));
-        table_widget->setItem(row_, 0, id_item);
+    for (int row = 0; row < rowsArray.size(); row++) {
+        QJsonObject rowObj = rowsArray[row].toObject();
         
-        QLineEdit *comment_edit = new QLineEdit("");
-        table_widget->setCellWidget(row_, 3, comment_edit);
 
-        QLineEdit *comment_edit_notes = new QLineEdit("");
-        table_widget->setCellWidget(row_, 5, comment_edit_notes);
+        QTableWidgetItem *nameItem = new QTableWidgetItem(QString(" %1").arg(rowObj["name"].toString()));
+        table_widget->setItem(row, 0, nameItem);
         
-        QComboBox *combo_box = new QComboBox();
-        combo_box->addItems({"正常", "异常"});
-        combo_box->setCurrentIndex(1);  // 默认选择异常
-        // combo_box->currentIndexChanged.connect(lambda index, row=row_: self.combo_changed(index, row));
-        table_widget->setCellWidget(row_, 4, combo_box);
-
-        QLineEdit *text_edit = nullptr;
-        QLineEdit *comment_edit_2 = nullptr;
-
-        if (row_ == 0 || row_ == 1 || row_ == 2 || row_ == 3 || row_ == 4 || row_ == 5) {
-            text_edit = new QLineEdit(QString(" %1").arg(text_1));
-            text_edit->setStyleSheet("background-color: lightgreen;");
-            comment_edit_2 = new QLineEdit("");
-            comment_edit = new QLineEdit("");
-            table_widget->setCellWidget(row_, 3, comment_edit);
-        } else if (row_ == 6) {
-            text_edit = new QLineEdit(QString(" %1").arg(text_2));
-            text_edit->setStyleSheet("background-color: lightblue;");
-            comment_edit_2 = new QLineEdit("手动调节背光检测背光变化");
-            QComboBox *combo_box_5 = new QComboBox();
-            combo_box_5->addItems({"空","0", "20", "50", "80", "100"});
-            connect(combo_box_5, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::combo_changed_5);
-            table_widget->setCellWidget(row_, 3, combo_box_5);
-        } else if (row_ == 7) {
-            comment_edit_2 = new QLineEdit("请扫描，观察灯光，OCR，TTS 翻译");
-            text_edit = new QLineEdit(QString(" %1").arg(text_2));
-            text_edit->setStyleSheet("background-color: lightblue;");
-        } else if (row_ == 8) {
-            comment_edit_2 = new QLineEdit("进入效准，请效准");
-            text_edit = new QLineEdit(QString(" %1").arg(text_2));
-            text_edit->setStyleSheet("background-color: lightblue;");
-            
-            QComboBox *combo_box_8 = new QComboBox();
-            combo_box_8->addItems({"空","进入", "退出"});
-            connect(combo_box_8, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::combo_changed_8);
-            table_widget->setCellWidget(row_, 3, combo_box_8);
-        } else if (row_ == 9) {
-            comment_edit_2 = new QLineEdit("查看静态功耗 标准在208MA左右 正负5MA,比208小也算正常");
-            text_edit = new QLineEdit(QString(" %1").arg(text_2));
-            text_edit->setStyleSheet("background-color: lightblue;");
-            QPushButton *combo_box_6 = new QPushButton();
-            combo_box_6->setText("");
-            table_widget->setCellWidget(row_, 3, combo_box_6);
-        } else if (row_ == 10) {
-            comment_edit_2 = new QLineEdit("扫描时的功耗");
-            text_edit = new QLineEdit(QString(" %1").arg(text_2));
-            text_edit->setStyleSheet("background-color: lightblue;");
-            QPushButton *combo_box_6 = new QPushButton();
-            combo_box_6->setText("");
-            table_widget->setCellWidget(row_, 3, combo_box_6);
-        } else if (row_ == 12) {
-            comment_edit_2 = new QLineEdit("查看连接wifi功耗 功耗105 正负10 ，有心跳包");
-            text_edit = new QLineEdit(QString(" %1").arg(text_2));
-            text_edit->setStyleSheet("background-color: lightblue;");
-            QPushButton *combo_box_11 = new QPushButton();
-            combo_box_11->setText("连接wifi");
-            connect(combo_box_11, &QPushButton::clicked, this, &MainWindow::start_test_content_11);
-            table_widget->setCellWidget(row_, 3, combo_box_11);
-        } else if (row_ == 11) {
-            comment_edit_2 = new QLineEdit("查看息屏功耗 80 正负10");
-            text_edit = new QLineEdit(QString(" %1").arg(text_2));
-            text_edit->setStyleSheet("background-color: lightblue;");
-            QPushButton *combo_box_12 = new QPushButton();
-            combo_box_12->setText("息屏");
-            connect(combo_box_12, &QPushButton::clicked, this, &MainWindow::start_test_content_12);
-            table_widget->setCellWidget(row_, 3, combo_box_12);
+        // 测试模式列
+        QString modeText = rowObj["mode"].toString();
+        QLineEdit *modeEdit = new QLineEdit(QString(" %1").arg(modeText));
+        
+        // 根据模式设置样式：自动为绿色，手动为蓝色
+        if (modeText == "自动") {
+            modeEdit->setStyleSheet("background-color: lightgreen;");
+        } else if (modeText == "手动") {
+            modeEdit->setStyleSheet("background-color: lightblue;");
         }
-
-        table_widget->setCellWidget(row_, 1, text_edit);
-        table_widget->setCellWidget(row_, 2, comment_edit_2);
+        
+        table_widget->setCellWidget(row, 1, modeEdit);
+        
+        // 测试内容列
+        QLineEdit *contentEdit = new QLineEdit(rowObj["content"].toString());
+        table_widget->setCellWidget(row, 2, contentEdit);
+        
+        // 进度列 - 使用进度条
+        QProgressBar *progressBar = new QProgressBar();
+        progressBar->setRange(0, 100);
+        progressBar->setValue(0);
+        progressBar->setTextVisible(true); // 显示进度百分比
+        progressBar->setAlignment(Qt::AlignCenter);
+        progressBar->setFormat("%p%");
+        // 设置样式表，使用灰色背景而不是默认的绿色
+        progressBar->setStyleSheet("QProgressBar {background-color: #e0e0e0; border: 1px solid #c0c0c0; border-radius: 2px; padding: 1px;} "
+                                  "QProgressBar::chunk {background-color: #c0c0c0; width: 1px;}");
+        table_widget->setCellWidget(row, 3, progressBar);
+        
+        // 结果列
+        QJsonObject resultObj = rowObj["result"].toObject();
+        if (resultObj["type"].toString() == "combo") {
+            QComboBox *resultCombo = new QComboBox();
+            QJsonArray itemsArray = resultObj["items"].toArray();
+            QStringList items;
+            for (const QJsonValue &item : itemsArray) {
+                items << item.toString();
+            }
+            resultCombo->addItems(items);
+            if (resultObj.contains("default")) {
+                resultCombo->setCurrentIndex(resultObj["default"].toInt());
+            }
+            table_widget->setCellWidget(row, 4, resultCombo);
+        }
+        
+        // 备注列
+        QLineEdit *noteEdit = new QLineEdit(rowObj["note"].toString());
+        table_widget->setCellWidget(row, 5, noteEdit);
     }
     
     mainLayout->addWidget(table_widget);
-
     show_log = new QTextEdit(this);
     mainLayout->addWidget(show_log);
-
     start_test = new QPushButton("开始测试", this);
+    start_test->setDefault(true); // 设置为默认按钮，支持回车键触发
+    start_test->setAutoDefault(true); // 当使用键盘导航时自动成为默认按钮
     connect(start_test, &QPushButton::clicked, this, &MainWindow::start_test_content);
     mainLayout->addWidget(start_test);
 }
@@ -167,19 +164,16 @@ void MainWindow::setupUi()
     setCentralWidget(centralWidget);
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
     
-    // 创建时间标签
     timeLabel = new QLabel(this);
     timeLabel->setAlignment(Qt::AlignRight);
     timeLabel->setStyleSheet("font-size: 14px; color: #666;");
     mainLayout->addWidget(timeLabel);
     
-    // 创建状态标签
     statusLabel = new QLabel("就绪中...", this);
     statusLabel->setAlignment(Qt::AlignCenter);
     statusLabel->setStyleSheet("font-size: 14px; color: #666; margin-bottom: 10px;");
     mainLayout->addWidget(statusLabel);
     
-    // 创建设备组
     deviceGroupBox = new QGroupBox("设备连接", this);
     QHBoxLayout *deviceLayout = new QHBoxLayout(deviceGroupBox);
     
@@ -192,7 +186,6 @@ void MainWindow::setupUi()
     
     mainLayout->addWidget(deviceGroupBox);
     
-    // 创建控制组
     controlGroupBox = new QGroupBox("输出控制", this);
     controlGroupBox->setEnabled(false);  // 初始禁用，直到设备连接
     QGridLayout *controlLayout = new QGridLayout(controlGroupBox);
@@ -218,7 +211,6 @@ void MainWindow::setupUi()
     
     mainLayout->addWidget(controlGroupBox);
     
-    // 创建状态组
     statusGroupBox = new QGroupBox("当前状态", this);
     statusGroupBox->setEnabled(false);  // 初始禁用，直到设备连接
     QGridLayout *statusLayout = new QGridLayout(statusGroupBox);
@@ -251,38 +243,27 @@ void MainWindow::setupUi()
 
 void MainWindow::initSmartPowerDevice()
 {
-    // 获取应用程序路径（仅用于显示）
-    QString appDir = QCoreApplication::applicationDirPath();
-    statusLabel->setText(QString("应用程序路径: %1").arg(appDir));
-    
-    // 检查目录下的lib文件夹是否存在
-    QDir libDir(appDir + "/lib");
-    if (!libDir.exists()) {
-        statusLabel->setText("错误: bin目录下没有lib文件夹");
-        statusLabel->setStyleSheet("color: red;");
-        connectButton->setEnabled(false);
-        return;
-    }
-    
-    // 检查DLL文件是否存在
-    if (!QFile::exists(appDir + "/lib/SmartPower.dll")) {
-        statusLabel->setText("错误: 没有找到lib/SmartPower.dll");
-        statusLabel->setStyleSheet("color: red;");
-        connectButton->setEnabled(false);
-        return;
-    }
-    
-    // 获取可用设备数量
     int deviceCount = powerController->getDeviceCount();
-    deviceCountLabel->setText(QString("可用设备：%1").arg(deviceCount));
+    show_log->append(QString("可用设备：%1").arg(deviceCount));
+    if (!powerController->isConnected()) {
+        // 连接设备
+        if (powerController->connectDevice(0)) {
+            show_log->append("设备已连接");
+        } else {
+            show_log->append("无法连接设备");
+        }
+    }
+    if (powerController->isConnected()) {
+        double voltage = 4.5;
+        double current = 1.5;
+        // 开启输出
+        if (powerController->setOutput(true, voltage, current)) {
+            // 更新UI状态
+            show_log->append(QString("开启输出: %1V, %2A").arg(voltage).arg(current));
 
-    if (deviceCount == 0) {
-        statusLabel->setText("未检测到SmartPower设备");
-        statusLabel->setStyleSheet("color: red;");
-        connectButton->setEnabled(false);
-    } else {
-        statusLabel->setText("已检测到SmartPower设备，请点击连接");
-        statusLabel->setStyleSheet("color: green;");
+        } else {
+            QMessageBox::critical(this, "错误", "无法开启输出");
+        }
     }
 }
 
@@ -355,6 +336,8 @@ void MainWindow::onOutputOnButtonClicked()
             QMessageBox::critical(this, "错误", "无法开启输出");
         }
     }
+
+
 }
 
 void MainWindow::onOutputOffButtonClicked()
@@ -402,11 +385,43 @@ void MainWindow::combo_changed_8(int index)
     qDebug() << "效准操作: " << index;
     if (index == 1) { // 进入
         // 实现进入效准模式的代码
-        qDebug() << "进入效准模式";
-    } else if (index == 2) { // 退出
+    } else if (index == 0) { // 退出
         // 实现退出效准模式的代码
-        qDebug() << "退出效准模式";
     }
+}
+
+// 事件过滤器实现，捕获回车键事件
+bool MainWindow::eventFilter(QObject *watched, QEvent *event)
+{
+    // 捕获回车键事件 - 只处理KeyPress事件，避免重复触发
+    if (event->type() == QEvent::KeyPress) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+        
+        // 如果按下回车键或回车键
+        if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
+            // 且开始测试按钮存在且可用且没有测试线程运行
+            if (start_test && start_test->isEnabled() && (!test_thread || !test_thread->isRunning())) {
+                // 立即聚焦并点击开始测试按钮
+                start_test->setFocus();
+                start_test->click();
+                qDebug() << "回车键触发了开始测试";
+                return true; // 阻止事件继续传递
+            }
+        }
+    } 
+    // ShortcutOverride事件也需要捕获，但不重复触发点击
+    else if (event->type() == QEvent::ShortcutOverride) {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
+        if ((keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) && 
+            start_test && start_test->isEnabled()) {
+            // 只标记事件已处理，但不触发点击
+            event->accept();
+            return true;
+        }
+    }
+    
+    // 其他事件默认处理
+    return QMainWindow::eventFilter(watched, event);
 }
 
 // 连接wifi按钮点击处理函数
@@ -418,21 +433,96 @@ void MainWindow::start_test_content_11()
     // 可以通过adb命令或其他方式连接设备wifi
 }
 
-// 息屏按钮点击处理函数
-void MainWindow::start_test_content_12()
+
+void MainWindow::start_test_content()
 {
-    // 实现息屏功能
-    qDebug() << "执行息屏操作";
-    // 在这里添加息屏的具体实现
-    // 可以通过adb命令或其他方式控制设备息屏
+
 }
 
-// 开始测试按钮点击处理函数
-void MainWindow::start_test_content()
+// 表格复位函数
+void MainWindow::resetTable()
+{
+    // 从配置文件重新加载数据
+    QFile configFile("d:/py/qtqbj/table_config.json");
+    if (!configFile.open(QIODevice::ReadOnly)) {
+        qWarning("无法打开表格配置文件!");
+        show_log->append("错误: 无法打开配置文件 d:/py/qtqbj/table_config.json");
+        return;
+    }
+
+    QByteArray configData = configFile.readAll();
+    configFile.close();
+
+    QJsonParseError jsonError;
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(configData, &jsonError);
+    if (jsonError.error != QJsonParseError::NoError) {
+        qWarning("JSON解析错误: %s", qPrintable(jsonError.errorString()));
+        show_log->append(QString("JSON解析错误: %1").arg(jsonError.errorString()));
+        return;
+    }
+
+    QJsonObject jsonObj = jsonDoc.object();
+    QJsonArray rowsArray = jsonObj["rows"].toArray();
+    
+    // 清空日志
+    show_log->clear();
+    show_log->append("表格已复位到初始状态");
+    
+    // 更新表格内容
+    for (int row = 0; row < qMin(rowsArray.size(), table_widget->rowCount()); row++) {
+        QJsonObject rowObj = rowsArray[row].toObject();
+        
+        // 测试模式列
+        QString modeText = rowObj["mode"].toString();
+        QLineEdit *modeEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 1));
+        if (modeEdit) {
+            modeEdit->setText(QString(" %1").arg(modeText));
+        }
+        
+        // 测试内容列
+        QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 2));
+        if (contentEdit) {
+            contentEdit->setText(rowObj["content"].toString());
+        }
+        
+        // 进度列 - 重置进度条为0
+        QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 3));
+        if (progressBar) {
+            progressBar->setValue(0);
+        }
+        
+        // 结果列
+        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 4));
+        if (resultCombo) {
+            QJsonObject resultObj = rowObj["result"].toObject();
+            if (resultObj.contains("default")) {
+                resultCombo->setCurrentIndex(resultObj["default"].toInt());
+            }
+        }
+        
+        // 备注列
+        QLineEdit *noteEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 5));
+        if (noteEdit) {
+            noteEdit->setText(rowObj["note"].toString());
+        }
+        
+        // 移除所有行的高亮样式
+        for (int col = 0; col < table_widget->columnCount(); col++) {
+            QTableWidgetItem *item = table_widget->item(row, col);
+            if (item) {
+                item->setBackground(Qt::transparent);
+            }
+        }
+    }
+}
+
+void MainWindow::start_test_content_12()
 {
     qDebug() << "开始测试";
     
-    // 如果有正在运行的测试线程，先停止它
+    resetTable();
+    
+ 
     if (test_thread && test_thread->isRunning()) {
         test_thread->requestStop();
         test_thread->wait();
@@ -440,17 +530,41 @@ void MainWindow::start_test_content()
         test_thread = nullptr;
     }
     
-    // 创建新的测试线程
     test_thread = new TestThread(table_widget, this);
     
-    // 连接信号到槽
     connect(test_thread, &TestThread::updateLog, this, [this](const QString &message) {
-        // 更新日志输出到QTextEdit
         show_log->append(message);
     });
     
+    connect(test_thread, &TestThread::updateProgress, this, [this](int row, int value) {
+        QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 3));
+        if (progressBar) {
+            progressBar->setValue(value);
+        }
+    });
+    
+    connect(test_thread, &TestThread::updateResult, this, [this](int row, const QString &result) {
+        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 4));
+        if (resultCombo) {
+
+            int index = resultCombo->findText(result);
+            if (index >= 0) {
+                resultCombo->setCurrentIndex(index);
+            } else {
+
+                for (int i = 0; i < resultCombo->count(); ++i) {
+                    if (resultCombo->itemText(i).contains(result)) {
+                        resultCombo->setCurrentIndex(i);
+                        break;
+                    }
+                }
+            }
+        }
+    });
+    
     connect(test_thread, &TestThread::finished, this, [this]() {
-        // 线程结束后的清理工作
+        start_test->setEnabled(true);
+        
         if (test_thread) {
             test_thread->deleteLater();
             test_thread = nullptr;
@@ -458,10 +572,8 @@ void MainWindow::start_test_content()
         show_log->append("测试线程已完成");
     });
     
-    // 启动线程
-    test_thread->start();
-    
-    // 更新UI状态
+
     start_test->setEnabled(false);
+    test_thread->start();
     show_log->append("测试已开始，请等待...");
 }

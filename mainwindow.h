@@ -12,6 +12,7 @@
 #include <QTimer>
 #include <QDateTime>
 #include <QThread>
+#include <QProgressBar>
 #include "smartpowercontroller.h"
 #include <QTableWidget>
 #include <QTextEdit>
@@ -24,6 +25,9 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    
+    // 事件过滤器，用于捕获回车键
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:
     void updateTime();
@@ -36,6 +40,7 @@ private slots:
     void start_test_content_11();
     void start_test_content_12();
     void start_test_content();
+    void resetTable();
     
 private:
     void setupUi();

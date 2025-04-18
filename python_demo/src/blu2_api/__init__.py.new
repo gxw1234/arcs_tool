@@ -1,0 +1,6 @@
+"""
+BLU2 API 包
+"""
+# 从新拆分的模块中导出主要类
+from .blu2_api import BLU2_API, BLU2_MP
+from .blu2_protocol import BLU2_Modes, BLU2_Command

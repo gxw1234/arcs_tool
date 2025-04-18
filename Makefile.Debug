@@ -250,6 +250,8 @@ debug/moc_mainwindow.cpp: mainwindow.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qdatetime.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QThread \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qthread.h \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/QProgressBar \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qprogressbar.h \
 		smartpowercontroller.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QString \
 		lib/smartpower.h \
@@ -561,6 +563,8 @@ debug/main.o: main.cpp mainwindow.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qdatetime.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QThread \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qthread.h \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/QProgressBar \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qprogressbar.h \
 		smartpowercontroller.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QString \
 		lib/smartpower.h \
@@ -729,6 +733,8 @@ debug/mainwindow.o: mainwindow.cpp mainwindow.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qdatetime.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QThread \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qthread.h \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/QProgressBar \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qprogressbar.h \
 		smartpowercontroller.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QString \
 		lib/smartpower.h \
@@ -758,6 +764,7 @@ debug/mainwindow.o: mainwindow.cpp mainwindow.h \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/qdialog.h \
 		../../qt/5.12.2/mingw73_32/include/QtGui/QDoubleValidator \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QDebug \
+		../../qt/5.12.2/mingw73_32/include/QtGui/QKeyEvent \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QCoreApplication \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qcoreapplication.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qeventloop.h \
@@ -768,7 +775,15 @@ debug/mainwindow.o: mainwindow.cpp mainwindow.h \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/QComboBox \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/qcombobox.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QStringList \
-		../../qt/5.12.2/mingw73_32/include/QtWidgets/QTableWidgetItem
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/QTableWidgetItem \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QJsonDocument \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qjsondocument.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qjsonvalue.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QJsonObject \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qjsonobject.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QJsonArray \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qjsonarray.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QJsonValue
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\mainwindow.o mainwindow.cpp
 
 debug/smartpowercontroller.o: smartpowercontroller.cpp smartpowercontroller.h \
@@ -974,7 +989,29 @@ debug/testthread.o: testthread.cpp testthread.h \
 		../../qt/5.12.2/mingw73_32/include/QtGui/qpen.h \
 		../../qt/5.12.2/mingw73_32/include/QtGui/qtextoption.h \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/QComboBox \
-		../../qt/5.12.2/mingw73_32/include/QtWidgets/qcombobox.h
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qcombobox.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QProcess \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qprocess.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QDir \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qdir.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qfileinfo.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QFileInfo \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QCoreApplication \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qcoreapplication.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qeventloop.h \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/QApplication \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qapplication.h \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qdesktopwidget.h \
+		../../qt/5.12.2/mingw73_32/include/QtGui/qguiapplication.h \
+		../../qt/5.12.2/mingw73_32/include/QtGui/qinputmethod.h \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/QMessageBox \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qmessagebox.h \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qdialog.h \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/QProgressBar \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qprogressbar.h \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/QPushButton \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qpushbutton.h \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qabstractbutton.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\testthread.o testthread.cpp
 
 debug/moc_mainwindow.o: debug/moc_mainwindow.cpp 
