@@ -1,0 +1,27 @@
+Installation of serial libraries for Windows: CSerialPort via vcpkg (version - V4.2.1.221107)
+D:> git clone https://github.com/Microsoft/vcpkg.git
+D:> cd vcpkg
+D:> bootstrap-vcpkg.bat
+D:> vcpkg.exe install cserialport
+
+About the secondary development interface:
+Open the project file directly with VS2019: blu-api-cpp.sln
+File 1: (see actual code for details)
+example_constantly.cpp // Use routines
+Sampling requires the following code:
+BLU_API blu939 (comport); // Automatically obtain the serial port number of the BLU
+
+BLU_API blu939 ("COM5");//Manually specify the BLU power analyzer serial port number
+
+blu939.get_modifiers();// Get BLU parameter data
+blu939.set_source_voltage(3000);//Set 3000mV, change the voltage according to your own product needs--- this parameter setting is very important!!!
+blu939.toggle_DUT_power("ON");//Turn on the power output of the BLU
+blu939.start_measuring();// Start sampling
+
+To stop sampling, execute the following code:
+blu939.stop_measuring();//Stop sampling
+blu939.toggle_DUT_power("OFF"); Turn off the power output of the BLU
+--------------------------------------------------------------
+
+File 2:
+blu_api.cpp // Secondary development interface source code file (and corresponding blu_api.h file)

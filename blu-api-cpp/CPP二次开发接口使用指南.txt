@@ -1,0 +1,27 @@
+Windows平台串口库的安装：通过vcpkg 安装 CSerialPort (版本 - V4.2.1.221107)
+D:\> git clone https://github.com/Microsoft/vcpkg.git
+D:\> cd vcpkg
+D:\> bootstrap-vcpkg.bat
+D:\> vcpkg.exe install cserialport
+
+关于二次开发接口：
+用vs2019直接打开工程文件:  blu-api-cpp.sln
+文件1：(具体参见实际代码)
+example_constantly.cpp    //使用例程
+//采样需要执行如下代码:
+BLU_API blu939(comport);//自动获取BLU的串口号
+
+BLU_API blu939("COM5");//手动指定BLU功耗分析仪串口号
+
+blu939.get_modifiers();//获取BLU参数数据
+blu939.set_source_voltage(3000);//设置3000mV,根据自己产品需求更改电压---这个参数设置非常重要!!!
+blu939.toggle_DUT_power("ON");//打开BLU的电源输出
+blu939.start_measuring();//开始采样
+
+//停止采样需要执行如下代码：
+blu939.stop_measuring();//停止采样
+blu939.toggle_DUT_power("OFF"); //关闭BLU的电源输出
+--------------------------------------------------------------
+
+文件2：
+blu_api.cpp                       //二次开发接口源代码文件(还有对应的 blu_api.h 文件)

@@ -17,6 +17,8 @@
 #include <QTableWidget>
 #include <QTextEdit>
 #include "testthread.h"
+#include "blu_serial.h"
+#include "blu_protocol.h"
 
 class MainWindow : public QMainWindow
 {
@@ -78,8 +80,15 @@ private:
     QPushButton *start_test;
     QTextEdit *show_log;
     TestThread *test_thread;
-
-
+    
+    // BLU设备相关
+    BLUSerial *bluSerial;
+    BLUProtocol *bluProtocol;
+    QString bluComPort;
+    int bluVoltageValue;
+    
+    // 关闭测试会话
+    void closeTestSession();
 };
 
 #endif // MAINWINDOW_H

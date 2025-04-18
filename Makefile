@@ -232,6 +232,7 @@ Makefile: SimpleQtApp.pro ../../qt/5.12.2/mingw73_32/mkspecs/win32-g++/qmake.con
 		SimpleQtApp.pro \
 		../../qt/5.12.2/mingw73_32/lib/Qt5Widgets.prl \
 		../../qt/5.12.2/mingw73_32/lib/Qt5Gui.prl \
+		../../qt/5.12.2/mingw73_32/lib/Qt5SerialPort.prl \
 		../../qt/5.12.2/mingw73_32/lib/Qt5Core.prl \
 		../../qt/5.12.2/mingw73_32/lib/qtmain.prl
 	$(QMAKE) -o Makefile SimpleQtApp.pro
@@ -404,6 +405,7 @@ Makefile: SimpleQtApp.pro ../../qt/5.12.2/mingw73_32/mkspecs/win32-g++/qmake.con
 SimpleQtApp.pro:
 ../../qt/5.12.2/mingw73_32/lib/Qt5Widgets.prl:
 ../../qt/5.12.2/mingw73_32/lib/Qt5Gui.prl:
+../../qt/5.12.2/mingw73_32/lib/Qt5SerialPort.prl:
 ../../qt/5.12.2/mingw73_32/lib/Qt5Core.prl:
 ../../qt/5.12.2/mingw73_32/lib/qtmain.prl:
 qmake: FORCE

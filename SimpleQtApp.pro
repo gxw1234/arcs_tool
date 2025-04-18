@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui serialport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 DESTDIR = $$PWD/bin
@@ -13,11 +13,15 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     smartpowercontroller.cpp \
-    testthread.cpp
+    testthread.cpp \
+    blu_serial.cpp \
+    blu_protocol.cpp
 
 HEADERS += \
     mainwindow.h \
     smartpowercontroller.h \
-    testthread.h
+    testthread.h \
+    blu_serial.h \
+    blu_protocol.h
 
 
