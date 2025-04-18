@@ -950,6 +950,8 @@ debug/mainwindow.o: mainwindow.cpp mainwindow.h \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/qdialog.h \
 		../../qt/5.12.2/mingw73_32/include/QtGui/QDoubleValidator \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QDebug \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QSettings \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qsettings.h \
 		../../qt/5.12.2/mingw73_32/include/QtGui/QKeyEvent \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QCoreApplication \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qcoreapplication.h \
@@ -1206,7 +1208,9 @@ debug/testthread.o: testthread.cpp testthread.h \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/qprogressbar.h \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/QPushButton \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/qpushbutton.h \
-		../../qt/5.12.2/mingw73_32/include/QtWidgets/qabstractbutton.h
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qabstractbutton.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QSettings \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qsettings.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\testthread.o testthread.cpp
 
 debug/blu_serial.o: blu_serial.cpp blu_serial.h \

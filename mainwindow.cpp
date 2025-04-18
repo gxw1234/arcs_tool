@@ -3,6 +3,7 @@
 #include <QMessageBox>
 #include <QDoubleValidator>
 #include <QDebug>
+#include <QSettings>
 #include <QKeyEvent>
 #include <QCoreApplication>
 #include <QDir>
@@ -29,13 +30,23 @@ MainWindow::MainWindow(QWidget *parent)
     setupUi_();
     initSmartPowerDevice();
     
+    // 读取配置文件
+    QSettings settings("d:/py/qtqbj/cfg.ini", QSettings::IniFormat);
+    
+    // 直接读取串口信息
+    burnComPort = settings.value("Serial/BurnCOM").toString();
+    bluComPort = settings.value("BLU/DeviceCOM").toString();
+    bluVoltageValue = 4000; // 使用固定的默认值
+    
+    qDebug() << "配置读取成功:";
+    qDebug() << "- 烧录COM口:" << burnComPort;
+    qDebug() << "- 设备COM口:" << bluComPort;
+    
     // 初始化协议实例
     bluProtocol = new BLUProtocol(this);
     
     // 初始化串口通信实例
     bluSerial = new BLUSerial(bluProtocol, this);
-    bluComPort = "COM8"; // 默认COM口
-    bluVoltageValue = 4000; // 默认电压4V (4000mV)
     // QTimer *timer = new QTimer(this);
     // connect(timer, &QTimer::timeout, this, &MainWindow::updateTime);
     // timer->start(1000);
@@ -307,7 +318,6 @@ void MainWindow::onConnectButtonClicked()
         // 断开连接
         statusTimer->stop();
         powerController->disconnectDevice();
-        
         // 手动更新UI状态
         statusLabel->setText("设备已断开连接");
         statusLabel->setStyleSheet("color: orange;");
@@ -514,8 +524,8 @@ void MainWindow::start_test_content()
     // 直接创建测试线程，去掉原月5秒延时
     show_log->append("创建测试线程...");
     
-    // 创建并启动测试线程
-    test_thread = new TestThread(table_widget, bluSerial, this);
+    // 创建并启动测试线程，传递烧录串口
+    test_thread = new TestThread(table_widget, bluSerial, this, burnComPort);
     
     // 连接测试线程的信号
     connect(test_thread, &TestThread::updateLog, this, [this](const QString &message) {
@@ -671,7 +681,7 @@ void MainWindow::start_test_content_12()
         test_thread = nullptr;
     }
     
-    test_thread = new TestThread(table_widget, bluSerial, this);
+    test_thread = new TestThread(table_widget, bluSerial, this, burnComPort);
     
     connect(test_thread, &TestThread::updateLog, this, [this](const QString &message) {
         show_log->append(message);

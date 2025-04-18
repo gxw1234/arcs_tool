@@ -87,6 +87,9 @@ private:
     QString bluComPort;
     int bluVoltageValue;
     
+    // 配置文件读取的串口信息
+    QString burnComPort;   // 烧录使用的COM口
+    
     // 关闭测试会话
     void closeTestSession();
 };

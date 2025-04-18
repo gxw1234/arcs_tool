@@ -12,7 +12,7 @@ class TestThread : public QThread
     Q_OBJECT
 
 public:
-    TestThread(QTableWidget *tableWidget, BLUSerial *bluSerial, QObject *parent = nullptr);
+    TestThread(QTableWidget *tableWidget, BLUSerial *bluSerial, QObject *parent = nullptr, const QString &burnComPort = "COM4");
     ~TestThread();
 
 protected:
@@ -27,6 +27,9 @@ private:
     QTableWidget *table_widget;
     BLUSerial *m_bluSerial; // BLU设备串口对象
     bool stopRequested;
+    
+    // 烧录使用的COM口
+    QString m_burnCOM;
 
     // 执行cskburn.exe命令烧录固件
     bool runCskBurn(const QString &comPort, int baudRate, const QString &address, const QString &binFile, QString &output);

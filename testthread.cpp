@@ -10,11 +10,14 @@
 #include <QMessageBox>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QSettings>
 
-TestThread::TestThread(QTableWidget *tableWidget, BLUSerial *bluSerial, QObject *parent)
-    : QThread(parent), table_widget(tableWidget), m_bluSerial(bluSerial), stopRequested(false)
+TestThread::TestThread(QTableWidget *tableWidget, BLUSerial *bluSerial, QObject *parent, const QString &burnComPort)
+    : QThread(parent), table_widget(tableWidget), m_bluSerial(bluSerial), stopRequested(false),
+      m_burnCOM(burnComPort)
 {
-
+    // 输出当前的串口设置
+    qDebug() << "在TestThread中使用的烧录COM口:" << m_burnCOM;
 }
 
 TestThread::~TestThread()
@@ -42,8 +45,9 @@ void TestThread::run()
             QString output;
             emit updateProgress(row, 20); // 先将进度设为20%
             
-            // 烧录CSK固件逻辑
-            if (runCskBurn("COM4", 115200, "0x0", "d:/py/qtqbj/bin/test.bin", output)) {
+            // 使用配置文件中的COM口进行烧录
+            qDebug() << "正在使用" << m_burnCOM << "烧录固件";
+            if (runCskBurn(m_burnCOM, 115200, "0x0", "d:/py/qtqbj/bin/test.bin", output)) {
                 emit updateProgress(row, 100); // 成功时设置进度为100%
                 emit updateResult(row, "正常");
                 emit updateLog("烧录成功: " + output);
@@ -52,30 +56,24 @@ void TestThread::run()
                 emit updateResult(row, "异常");
                 emit updateLog("烧录失败: " + output);
             }
-            
             emit updateLog("已完成行 " + QString::number(row) + ": " + testName);
         } 
         else if (row == 1) {
-            // 测量电流
             emit updateLog("正在测量电流...");
             emit updateProgress(row, 20); // 先将进度设为20%
-            // 开始连续测量
+           
             emit updateLog("开始连续测量...");
             if (m_bluSerial && !m_bluSerial->startMeasurement()) {
                 emit updateLog("开始测量失败");
                 return;
             }
             QThread::msleep(5000);
-
             if (m_bluSerial && m_bluSerial->isConnected()) {
                 QByteArray data = m_bluSerial->readData(15000); // 限制最多15000字节
                 emit updateLog(QString("读取到原始数据: %1 字节").arg(data.size()));
-                
                 if (!data.isEmpty()) {
-                    
                     QByteArray remainder; // 创建一个临时变量传递给processSamples
                     QVector<double> samples = m_bluSerial->getProtocol()->processSamples(data, remainder);
-                    
                     // 显示样本数量和平均值
                     if (!samples.isEmpty()) {
                         double avgCurrent = 0.0;
