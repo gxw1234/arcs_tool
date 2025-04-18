@@ -4,13 +4,15 @@
 #include <QThread>
 #include <QTableWidget>
 #include <QString>
+#include "blu_serial.h"
+#include "blu_protocol.h"
 
 class TestThread : public QThread
 {
     Q_OBJECT
 
 public:
-    TestThread(QTableWidget *tableWidget, QObject *parent = nullptr);
+    TestThread(QTableWidget *tableWidget, BLUSerial *bluSerial, QObject *parent = nullptr);
     ~TestThread();
 
 protected:
@@ -23,6 +25,7 @@ signals:
 
 private:
     QTableWidget *table_widget;
+    BLUSerial *m_bluSerial; // BLU设备串口对象
     bool stopRequested;
 
     // 执行cskburn.exe命令烧录固件

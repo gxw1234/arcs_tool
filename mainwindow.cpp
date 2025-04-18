@@ -29,12 +29,13 @@ MainWindow::MainWindow(QWidget *parent)
     setupUi_();
     initSmartPowerDevice();
     
-    // 初始化BLU设备相关对象
-    bluSerial = new BLUSerial(this);
+    // 初始化协议实例
     bluProtocol = new BLUProtocol(this);
+    
+    // 初始化串口通信实例
+    bluSerial = new BLUSerial(bluProtocol, this);
     bluComPort = "COM8"; // 默认COM口
     bluVoltageValue = 4000; // 默认电压4V (4000mV)
-    
     // QTimer *timer = new QTimer(this);
     // connect(timer, &QTimer::timeout, this, &MainWindow::updateTime);
     // timer->start(1000);
@@ -444,14 +445,131 @@ void MainWindow::start_test_content_11()
 }
 
 
+void MainWindow::start_test_content()
+{
+    qDebug() << "开始测试";
+    
+    // 重置表格
+    resetTable();
+    
+    // 检查是否有正在运行的测试线程
+    if (test_thread && test_thread->isRunning()) {
+        test_thread->requestStop();
+        test_thread->wait();
+        delete test_thread;
+        test_thread = nullptr;
+    }
+    
+    // 禁用开始按钮
+    start_test->setEnabled(false);
+    
+    // 连接并初始化BLU设备
+    show_log->append("连接BLU设备...");
+    if (!bluSerial->connectToPort(bluComPort, 9600)) {
+        show_log->append("无法打开端口：" + bluComPort);
+        start_test->setEnabled(true);
+        return;
+    }
+    show_log->append("设备连接成功");
+    
+    // 获取设备修正因子
+    QByteArray metaData = bluSerial->getMetadata();
+    
+    if (metaData.isEmpty()) {
+        show_log->append("读取设备元数据失败，使用默认值");
+    } else {
+        bool ok = bluProtocol->parseMetadata(metaData);
+        if (ok) {
+            show_log->append("已读取校准因子");
+        } else {
+            show_log->append("解析校准因子失败，使用默认值");
+        }
+    }
+    
+    // 切换到源表模式
+    if (!bluSerial->setMode(BLUMode::SOURCE_MODE)) {
+        show_log->append("切换到源表模式失败");
+        closeTestSession();
+        return;
+    }
+    show_log->append("已切换到源表模式");
+    
+    // 设置源电压为默认值
+    if (!bluSerial->setVoltage(bluVoltageValue)) {
+        show_log->append("设置源电压失败");
+        closeTestSession();
+        return;
+    }
+    show_log->append(QString("已设置源电压为 %1V").arg(bluVoltageValue/1000.0));
+    
+    // 打开DUT电源
+    if (!bluSerial->toggleDUTPower(true)) {
+        show_log->append("打开DUT电源失败");
+        closeTestSession();
+        return;
+    }
+    
+    show_log->append("已打开DUT电源");
+    
+    // 直接创建测试线程，去掉原月5秒延时
+    show_log->append("创建测试线程...");
+    
+    // 创建并启动测试线程
+    test_thread = new TestThread(table_widget, bluSerial, this);
+    
+    // 连接测试线程的信号
+    connect(test_thread, &TestThread::updateLog, this, [this](const QString &message) {
+        show_log->append(message);
+    });
+    
+    connect(test_thread, &TestThread::updateProgress, this, [this](int row, int value) {
+        QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 3));
+        if (progressBar) {
+            progressBar->setValue(value);
+        }
+    });
+    
+    connect(test_thread, &TestThread::updateResult, this, [this](int row, const QString &result) {
+        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 4));
+        if (resultCombo) {
+            int index = resultCombo->findText(result);
+            if (index >= 0) {
+                resultCombo->setCurrentIndex(index);
+            } else {
+                for (int i = 0; i < resultCombo->count(); ++i) {
+                    if (resultCombo->itemText(i).contains(result)) {
+                        resultCombo->setCurrentIndex(i);
+                        break;
+                    }
+                }
+            }
+        }
+    });
+    
+    // 测试完成后关闭设备
+    connect(test_thread, &TestThread::finished, this, [this]() {
+        start_test->setEnabled(true);
+        
+        if (test_thread) {
+            test_thread->deleteLater();
+            test_thread = nullptr;
+        }
+        show_log->append("测试线程已完成");
+        
+        // 停止测量并关闭BLU设备
+        bluSerial->stopMeasurement();
+        closeTestSession();
+    });
+    
+    test_thread->start();
+    show_log->append("测试线程已启动，请等待...");
+}
+
 // 关闭测试会话
- void MainWindow::closeTestSession()
+void MainWindow::closeTestSession()
 {
     // 关闭DUT电源
-    QByteArray command;
-    command.append(static_cast<char>(BLUProtocol::Command::DEVICE_RUNNING_SET));
-    command.append(static_cast<char>(BLUProtocol::Command::NO_OP));
-    bluSerial->writeSerial(command);
+    bluSerial->toggleDUTPower(false);
     show_log->append("关闭DUT电源");
     
     // 关闭串口连接
@@ -460,150 +578,6 @@ void MainWindow::start_test_content_11()
     
     // 重新启用开始测试按钮
     start_test->setEnabled(true);
-}
-
-void MainWindow::start_test_content()
-{
-    show_log->append("开始BLU设备测试...");
-    
-    // 禁用开始测试按钮，防止重复测试
-    start_test->setEnabled(false);
-    
-    // 连接BLU设备
-    show_log->append(QString("正在连接BLU设备 (端口: %1, 波特率: 9600)...").arg(bluComPort));
-    if (!bluSerial->connectToPort(bluComPort, 9600)) {
-        show_log->append("连接BLU设备失败，请检查端口设置");
-        start_test->setEnabled(true);
-        return;
-    }
-    
-    show_log->append("设备连接成功");
-    
-    // 获取设备修正因子
-    QByteArray command;
-    command.append(static_cast<char>(BLUProtocol::Command::GET_META_DATA));
-    if (!bluSerial->writeSerial(command)) {
-        show_log->append("发送获取元数据命令失败");
-        closeTestSession();
-        return;
-    }
-    
-    // 等待一小段时间，然后读取元数据
-    QThread::msleep(100);
-    QByteArray metaData = bluSerial->readData(0);
-    
-    if (metaData.isEmpty()) {
-        show_log->append("读取设备元数据失败，使用默认值");
-    } else {
-        // 解析设备元数据
-        if (bluProtocol->parseMetadata(metaData)) {
-            show_log->append("成功解析设备修正因子");
-        } else {
-            show_log->append("解析设备修正因子失败，使用默认值");
-        }
-    }
-    
-    // 切换到源表模式
-    bluProtocol->setMode(SOURCE_MODE);
-    command.clear();
-    command.append(static_cast<char>(BLUProtocol::Command::SET_POWER_MODE));
-    command.append(static_cast<char>(BLUProtocol::Command::AVG_NUM_SET));
-    if (!bluSerial->writeSerial(command)) {
-        show_log->append("切换到源表模式失败");
-        closeTestSession();
-        return;
-    }
-    
-    show_log->append("已切换到源表模式");
-    
-    // 设置源电压为默认值
-    QByteArray voltBytes = bluProtocol->convertSourceVoltage(bluVoltageValue);
-    command.clear();
-    command.append(static_cast<char>(BLUProtocol::Command::REGULATOR_SET));
-    command.append(voltBytes);
-    if (!bluSerial->writeSerial(command)) {
-        show_log->append("设置源电压失败");
-        closeTestSession();
-        return;
-    }
-    
-    bluProtocol->setCurrentVdd(bluVoltageValue);
-    show_log->append(QString("已设置源电压为 %1V").arg(bluVoltageValue/1000.0));
-    
-    // 打开DUT电源
-    command.clear();
-    command.append(static_cast<char>(BLUProtocol::Command::DEVICE_RUNNING_SET));
-    command.append(static_cast<char>(BLUProtocol::Command::TRIGGER_SET));
-    if (!bluSerial->writeSerial(command)) {
-        show_log->append("打开DUT电源失败");
-        closeTestSession();
-        return;
-    }
-    
-    show_log->append("已打开DUT电源");
-    show_log->append("等待系统稳定 (5秒)...");
-    
-    // 使用QTimer等待5秒查看上电电印
-    QTimer::singleShot(5000, this, [this]() {
-        show_log->append("开始测量...");
-        
-        // 开始连续测量
-        QByteArray command;
-        command.append(static_cast<char>(BLUProtocol::Command::AVERAGE_START));
-        if (!bluSerial->writeSerial(command)) {
-            show_log->append("开始测量失败");
-            closeTestSession();
-            return;
-        }
-        
-        // 等待5秒收集数据
-        show_log->append("等待数据采集 (5秒)...");
-        
-        // 等待5秒后读取数据 - 与Python版本行为相同
-        QTimer::singleShot(1000, this, [this]() {
-            // 准备采集数据
-            show_log->append("开始读取串口数据...");
-            
-            // 只读取一次数据，与Python版本完全一致
-            QByteArray data = bluSerial->readData(15000); // 限制最多15000字节
-
-            show_log->append(QString("读取到原始数据: %1 字节").arg(data.size()));
-            
-            if (!data.isEmpty()) {
-                // 处理样本数据
-                QVector<double> samples = bluProtocol->processSamples(data, bluSerial->remainder);
-                
-                // 显示样本数量和平均值
-                if (!samples.isEmpty()) {
-                    double sum = 0;
-                    for (double sample : samples) {
-                        sum += sample;
-                    }
-                    
-                    double avgCurrent_uA = sum / samples.size();
-                    double avgCurrent_mA = avgCurrent_uA / 1000;
-                    double avgPower_mW = (bluProtocol->currentVdd() / 1000.0) * avgCurrent_mA;
-                    
-                    show_log->append(QString("获取样本数量: %1").arg(samples.size()));
-                    show_log->append(QString("平均电流: %1 mA").arg(avgCurrent_mA, 0, 'f', 3));
-                    show_log->append(QString("平均功率: %1 mW").arg(avgPower_mW, 0, 'f', 3));
-                } else {
-                    show_log->append("未获取到样本数据");
-                }
-            } else {
-                show_log->append("未获取到数据");
-            }
-            
-            // 停止测量
-            QByteArray stopCommand;
-            stopCommand.append(static_cast<char>(BLUProtocol::Command::AVERAGE_STOP));
-            bluSerial->writeSerial(stopCommand);
-            show_log->append("停止测量");
-            
-            // 完成测试会话
-            closeTestSession();
-        });
-    });
 }
 
 // 表格复位函数
@@ -697,7 +671,7 @@ void MainWindow::start_test_content_12()
         test_thread = nullptr;
     }
     
-    test_thread = new TestThread(table_widget, this);
+    test_thread = new TestThread(table_widget, bluSerial, this);
     
     connect(test_thread, &TestThread::updateLog, this, [this](const QString &message) {
         show_log->append(message);

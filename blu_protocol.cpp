@@ -250,3 +250,67 @@ double BLUProtocol::processADCValue(quint32 adc_val)
     
     return current_uA;
 }
+
+// 生成设置电压的命令
+QByteArray BLUProtocol::generateSetVoltageCommand(int voltage_mV)
+{
+    QByteArray command;
+    command.append(static_cast<char>(Command::REGULATOR_SET));
+    command.append(convertSourceVoltage(voltage_mV));
+    return command;
+}
+
+// 生成开关DUT电源的命令
+QByteArray BLUProtocol::generateToggleDUTPowerCommand(bool turnOn)
+{
+    QByteArray command;
+    command.append(static_cast<char>(Command::DEVICE_RUNNING_SET));
+    if (turnOn) {
+        command.append(static_cast<char>(Command::TRIGGER_SET));
+    } else {
+        command.append(static_cast<char>(Command::NO_OP));
+    }
+    return command;
+}
+
+// 生成开始测量的命令
+QByteArray BLUProtocol::generateStartMeasurementCommand()
+{
+    QByteArray command;
+    command.append(static_cast<char>(Command::AVERAGE_START));
+    return command;
+}
+
+// 生成停止测量的命令
+QByteArray BLUProtocol::generateStopMeasurementCommand()
+{
+    QByteArray command;
+    command.append(static_cast<char>(Command::AVERAGE_STOP));
+    return command;
+}
+
+// 生成获取元数据的命令
+QByteArray BLUProtocol::generateGetMetadataCommand()
+{
+    QByteArray command;
+    command.append(static_cast<char>(Command::GET_META_DATA));
+    return command;
+}
+
+// 生成设置模式的命令
+QByteArray BLUProtocol::generateSetModeCommand(BLUMode mode)
+{
+    QByteArray command;
+    
+    switch (mode) {
+        case SOURCE_MODE:
+            command.append(static_cast<char>(Command::SET_POWER_MODE));
+            command.append(static_cast<char>(Command::AVG_NUM_SET));
+            break;
+        case MEASURE_MODE:
+            // 如果有其他模式的命令，可以在这里添加
+            break;
+    }
+    
+    return command;
+}

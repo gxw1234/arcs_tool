@@ -427,6 +427,15 @@ debug/moc_testthread.cpp: testthread.h \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/qtabwidget.h \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/qrubberband.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QString \
+		blu_serial.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QObject \
+		../../qt/5.12.2/mingw73_32/include/QtSerialPort/QSerialPort \
+		../../qt/5.12.2/mingw73_32/include/QtSerialPort/qserialport.h \
+		../../qt/5.12.2/mingw73_32/include/QtSerialPort/qserialportglobal.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QByteArray \
+		blu_protocol.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QVector \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QMap \
 		debug/moc_predefs.h \
 		../../qt/5.12.2/mingw73_32/bin/moc.exe
 	D:\qt\5.12.2\mingw73_32\bin\moc.exe $(DEFINES) --include D:/py/qtqbj/debug/moc_predefs.h -ID:/qt/5.12.2/mingw73_32/mkspecs/win32-g++ -ID:/py/qtqbj -ID:/py/qtqbj/lib -ID:/qt/5.12.2/mingw73_32/include -ID:/qt/5.12.2/mingw73_32/include/QtWidgets -ID:/qt/5.12.2/mingw73_32/include/QtGui -ID:/qt/5.12.2/mingw73_32/include/QtANGLE -ID:/qt/5.12.2/mingw73_32/include/QtSerialPort -ID:/qt/5.12.2/mingw73_32/include/QtCore -ID:/tool/cmake/cmake_zip/mingw64/lib/gcc/x86_64-w64-mingw32/14.2.0/include/c++ -ID:/tool/cmake/cmake_zip/mingw64/lib/gcc/x86_64-w64-mingw32/14.2.0/include/c++/x86_64-w64-mingw32 -ID:/tool/cmake/cmake_zip/mingw64/lib/gcc/x86_64-w64-mingw32/14.2.0/include/c++/backward -ID:/tool/cmake/cmake_zip/mingw64/lib/gcc/x86_64-w64-mingw32/14.2.0/include -ID:/tool/cmake/cmake_zip/mingw64/lib/gcc/x86_64-w64-mingw32/14.2.0/include-fixed -ID:/tool/cmake/cmake_zip/mingw64/x86_64-w64-mingw32/include testthread.h -o debug\moc_testthread.cpp
@@ -1158,6 +1167,15 @@ debug/testthread.o: testthread.cpp testthread.h \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/qtabwidget.h \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/qrubberband.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QString \
+		blu_serial.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QObject \
+		../../qt/5.12.2/mingw73_32/include/QtSerialPort/QSerialPort \
+		../../qt/5.12.2/mingw73_32/include/QtSerialPort/qserialport.h \
+		../../qt/5.12.2/mingw73_32/include/QtSerialPort/qserialportglobal.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QByteArray \
+		blu_protocol.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QVector \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QMap \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QDebug \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/QLineEdit \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/qlineedit.h \
@@ -1248,20 +1266,25 @@ debug/blu_serial.o: blu_serial.cpp blu_serial.h \
 		../../qt/5.12.2/mingw73_32/include/QtSerialPort/qserialportglobal.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QByteArray \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QString \
-		../../qt/5.12.2/mingw73_32/include/QtCore/QDebug \
+		blu_protocol.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QVector \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qvector.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qpoint.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QMap \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qmap.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qdebug.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qhash.h \
-		../../qt/5.12.2/mingw73_32/include/QtCore/qmap.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qtextstream.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qlocale.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qvariant.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qshareddata.h \
-		../../qt/5.12.2/mingw73_32/include/QtCore/qvector.h \
-		../../qt/5.12.2/mingw73_32/include/QtCore/qpoint.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qset.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qcontiguouscache.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qsharedpointer.h \
-		../../qt/5.12.2/mingw73_32/include/QtCore/qsharedpointer_impl.h
+		../../qt/5.12.2/mingw73_32/include/QtCore/qsharedpointer_impl.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QDebug \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QThread \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qthread.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\blu_serial.o blu_serial.cpp
 
 debug/blu_protocol.o: blu_protocol.cpp blu_protocol.h \

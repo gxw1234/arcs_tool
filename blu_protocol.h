@@ -66,6 +66,25 @@ public:
     // 处理样本数据
     QVector<double> processSamples(const QByteArray &data, QByteArray &remainder);
     
+    // 高级函数，引用自官方API
+    // 生成设置电压的命令
+    QByteArray generateSetVoltageCommand(int voltage_mV);
+    
+    // 生成开关DUT电源的命令
+    QByteArray generateToggleDUTPowerCommand(bool turnOn);
+    
+    // 生成开始测量的命令
+    QByteArray generateStartMeasurementCommand();
+    
+    // 生成停止测量的命令
+    QByteArray generateStopMeasurementCommand();
+    
+    // 生成获取元数据的命令
+    QByteArray generateGetMetadataCommand();
+    
+    // 生成设置模式的命令
+    QByteArray generateSetModeCommand(BLUMode mode);
+    
 private:
     BLUMode m_mode;
     int m_currentVdd;

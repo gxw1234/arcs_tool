@@ -11,8 +11,8 @@
 #include <QProgressBar>
 #include <QPushButton>
 
-TestThread::TestThread(QTableWidget *tableWidget, QObject *parent)
-    : QThread(parent), table_widget(tableWidget), stopRequested(false)
+TestThread::TestThread(QTableWidget *tableWidget, BLUSerial *bluSerial, QObject *parent)
+    : QThread(parent), table_widget(tableWidget), m_bluSerial(bluSerial), stopRequested(false)
 {
 
 }
@@ -30,35 +30,96 @@ void TestThread::requestStop()
 
 void TestThread::run()
 {
+
+    QThread::msleep(2000);
     emit updateLog("自动化测试开始");
     for (int row = 0; row < table_widget->rowCount(); ++row) {
-        // if (stopRequested) {
-        //     emit updateLog("测试被用户终止");
-        //     break;
-        // }
-        
-        // 获取测试项名称
         QString testName = table_widget->item(row, 0)->text().trimmed();
         emit updateLog("开始测试行 " + QString::number(row) + ": " + testName);
         
         if (row == 0) {
             // 第一行执行烧录操作
             QString output;
-            emit updateProgress(row, 20); // 设置进度为20%
-            bool success = runCskBurn("COM13", 3000000, "0x1000", "arcs_adb.bin", output);
-            if (success) {
+            emit updateProgress(row, 20); // 先将进度设为20%
+            
+            // 烧录CSK固件逻辑
+            if (runCskBurn("COM4", 115200, "0x0", "d:/py/qtqbj/bin/test.bin", output)) {
+                emit updateProgress(row, 100); // 成功时设置进度为100%
+                emit updateResult(row, "正常");
                 emit updateLog("烧录成功: " + output);
-                emit updateProgress(row, 100); // 设置进度为100%
             } else {
-                emit updateLog("烧录失败: " + output);
                 emit updateProgress(row, 0); // 失败时重置进度
+                emit updateResult(row, "异常");
+                emit updateLog("烧录失败: " + output);
             }
+            
             emit updateLog("已完成行 " + QString::number(row) + ": " + testName);
         } 
         else if (row == 1) {
+            // 测量电流
+            emit updateLog("正在测量电流...");
+            emit updateProgress(row, 20); // 先将进度设为20%
+            // 开始连续测量
+            emit updateLog("开始连续测量...");
+            if (m_bluSerial && !m_bluSerial->startMeasurement()) {
+                emit updateLog("开始测量失败");
+                return;
+            }
+            QThread::msleep(5000);
+
+            if (m_bluSerial && m_bluSerial->isConnected()) {
+                QByteArray data = m_bluSerial->readData(15000); // 限制最多15000字节
+                emit updateLog(QString("读取到原始数据: %1 字节").arg(data.size()));
+                
+                if (!data.isEmpty()) {
+                    
+                    QByteArray remainder; // 创建一个临时变量传递给processSamples
+                    QVector<double> samples = m_bluSerial->getProtocol()->processSamples(data, remainder);
+                    
+                    // 显示样本数量和平均值
+                    if (!samples.isEmpty()) {
+                        double avgCurrent = 0.0;
+                        for (double sample : samples) {
+                            avgCurrent += sample;
+                        }
+                        avgCurrent /= samples.size();
+                        
+                        // 计算功率 P = U * I
+                        double voltage = m_bluSerial->getProtocol()->currentVdd() / 1000.0; // 源电压（V）
+                        double power = voltage * avgCurrent / 1000000.0; // 功率（W）
+                        
+                        // 统一使用mA单位显示
+                        emit updateLog(QString("平均电流: %1 mA").arg(avgCurrent/1000.0, 0, 'f', 3));
+                        emit updateLog(QString("电源电压: %1 V").arg(voltage, 0, 'f', 3));
+                        emit updateLog(QString("功耗: %1 mW").arg(power * 1000, 0, 'f', 3));
+                        
+                        // 将电流值作为测试结果
+                        emit updateResult(row, QString("%1 mA").arg(avgCurrent/1000.0, 0, 'f', 3));
+                        emit updateProgress(row, 100); // 设置进度为100%
+                    } else {
+                        emit updateLog("未收集到有效样本");
+                        emit updateResult(row, "异常");
+                        emit updateProgress(row, 0); // 失败时重置进度
+                    }
+                } else {
+                    emit updateLog("未读取到数据");
+                    emit updateResult(row, "异常");
+                    emit updateProgress(row, 0); // 失败时重置进度
+                }
+            } else {
+                emit updateLog("BLU设备未连接");
+                emit updateResult(row, "异常");
+                emit updateProgress(row, 0); // 失败时重置进度
+            }
+            
+            // 停止测量
+            if (m_bluSerial) {
+                m_bluSerial->stopMeasurement();
+            }
+            
+            emit updateLog("已完成行 " + QString::number(row) + ": 测量电流");
 
         }
-        
         else {
             // 非第一行弹出对话框
             emit updateProgress(row, 20); // 先将进度设为20%
