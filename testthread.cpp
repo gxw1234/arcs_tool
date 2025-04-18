@@ -54,7 +54,12 @@ void TestThread::run()
                 emit updateProgress(row, 0); // 失败时重置进度
             }
             emit updateLog("已完成行 " + QString::number(row) + ": " + testName);
-        } else {
+        } 
+        else if (row == 1) {
+
+        }
+        
+        else {
             // 非第一行弹出对话框
             emit updateProgress(row, 20); // 先将进度设为20%
             

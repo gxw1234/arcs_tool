@@ -1,6 +1,0 @@
-E:\blu-api-cpp\Debug\blu-api-cpp.vcxproj.CopyComplete
-E:\blu-api-cpp\Debug\blu-api-cpp.exe
-E:\blu-api-cpp\Debug\libcserialport.dll
-E:\BaiduNetdiskDownload\api_lib\C++\blu-api-cpp_202302220940\blu-api-cpp\Debug\blu-api-cpp.vcxproj.CopyComplete
-E:\BaiduNetdiskDownload\api_lib\C++\blu-api-cpp_202302220940\blu-api-cpp\Debug\blu-api-cpp.exe
-E:\BaiduNetdiskDownload\api_lib\C++\blu-api-cpp_202302220940\blu-api-cpp\Debug\libcserialport.dll
