@@ -51,8 +51,8 @@
             "note": ""
         },
         {
-            "id": "C",
-            "name": "wifi扫描",
+            "id": "C1",
+            "name": "供电3.5V开发板上电时间",
             "mode": "自动",
             "content": "",
             "progress": "",

@@ -73,7 +73,6 @@ void MainWindow::setupUi_()
     centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
-
     // 从JSON文件加载表格配置
     QFile configFile("d:/py/qtqbj/table_config.json");
     if (!configFile.open(QIODevice::ReadOnly)) {
@@ -468,10 +467,8 @@ void MainWindow::start_test_content()
         delete test_thread;
         test_thread = nullptr;
     }
-    
     // 禁用开始按钮
     start_test->setEnabled(false);
-    
     // 连接并初始化BLU设备
     show_log->append("连接BLU设备...");
     if (!bluSerial->connectToPort(bluComPort, 9600)) {
@@ -480,10 +477,8 @@ void MainWindow::start_test_content()
         return;
     }
     show_log->append("设备连接成功");
-    
     // 获取设备修正因子
     QByteArray metaData = bluSerial->getMetadata();
-    
     if (metaData.isEmpty()) {
         show_log->append("读取设备元数据失败，使用默认值");
     } else {
@@ -509,6 +504,7 @@ void MainWindow::start_test_content()
         closeTestSession();
         return;
     }
+    
     show_log->append(QString("已设置源电压为 %1V").arg(bluVoltageValue/1000.0));
     
     // 打开DUT电源

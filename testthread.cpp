@@ -242,6 +242,35 @@ void TestThread::run()
             emit updateLog("已完成行 " + QString::number(row) + ": 测量电流");
 
         }
+        else if (rowId == "C1") {
+            emit updateProgress(row, 20); 
+            if (!m_bluSerial->setVoltage(3500)) {
+                emit updateLog("设置源电压失败");
+            }
+            else{
+                emit updateLog("已设置源电压为3.5V");
+            }
+            emit updateProgress(row, 40);
+
+            // 关闭DUT电源
+            if (!m_bluSerial->toggleDUTPower(false)) {
+                emit updateLog("关闭DUT电源失败");
+
+            }else{
+                emit updateLog("已关闭DUT电源");
+            }
+            emit updateProgress(row, 60);
+            QThread::msleep(500);
+
+            // 打开DUT电源
+            if (!m_bluSerial->toggleDUTPower(true)) {
+                emit updateLog("打开DUT电源失败");
+               
+            }else{
+                emit updateLog("已打开DUT电源");
+            }
+            emit updateProgress(row, 80);
+        }
         else {
           
             emit updateProgress(row, 20); // 先将进度设为20%
