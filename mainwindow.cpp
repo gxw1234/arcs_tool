@@ -625,13 +625,13 @@ void MainWindow::resetTable()
         
         // 测试模式列
         QString modeText = rowObj["mode"].toString();
-        QLineEdit *modeEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 1));
+        QLineEdit *modeEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 2));
         if (modeEdit) {
             modeEdit->setText(QString(" %1").arg(modeText));
         }
         
         // 测试内容列
-        QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 2));
+        QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
         if (contentEdit) {
             contentEdit->setText(rowObj["content"].toString());
         }

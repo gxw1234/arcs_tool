@@ -39,17 +39,14 @@ void TestThread::requestStop()
 
 void TestThread::run()
 {
-
     // QThread::msleep(4000);
     emit updateLog("自动化测试开始");
-    
     for (int row = 0; row < table_widget->rowCount(); ++row) {
         // 获取当前行的ID和测试名称
         QTableWidgetItem* idItem = table_widget->item(row, 0);
         QString rowId = idItem ? idItem->text() : "";
         QString testName = table_widget->item(row, 1)->text().trimmed();
         emit updateLog(QString("开始测试行 %1 (ID: %2): %3").arg(row).arg(rowId).arg(testName));
-
         // 分别设置  结果  内容 进度
         QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
         QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
