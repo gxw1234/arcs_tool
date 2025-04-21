@@ -34,31 +34,85 @@ void TestThread::requestStop()
 void TestThread::run()
 {
 
-    QThread::msleep(2000);
+    QThread::msleep(4000);
     emit updateLog("自动化测试开始");
+    
     for (int row = 0; row < table_widget->rowCount(); ++row) {
-        QString testName = table_widget->item(row, 0)->text().trimmed();
-        emit updateLog("开始测试行 " + QString::number(row) + ": " + testName);
+        // 获取当前行的ID和测试名称
+        QTableWidgetItem* idItem = table_widget->item(row, 0);
+        QString rowId = idItem ? idItem->text() : "";
+        QString testName = table_widget->item(row, 1)->text().trimmed();
+        emit updateLog(QString("开始测试行 %1 (ID: %2): %3").arg(row).arg(rowId).arg(testName));
         
-        if (row == 0) {
-            // 第一行执行烧录操作
+        // 使用ID而不是行号来判断测试类型
+        if (rowId == "A1") {
+           
+            // QString output;
+            // emit updateProgress(row, 20); // 先将进度设为20%
+            
+            // // 使用配置文件中的COM口进行烧录
+            // qDebug() << "正在使用" << m_burnCOM << "烧录固件";
+            // if (runCskBurn(m_burnCOM, 3000000, "0x0", "./fw/snb.bin", output)) {
+               
+            //     emit updateResult(row, "正常");
+            //     emit updateLog("烧录成功: " + output);
+            // } else {
+            //     emit updateResult(row, "异常");
+            //     emit updateLog("烧录失败: " + output);
+            // }
+
+            // emit updateProgress(row, 40); // 烧录完成后将进度设为40%
+            
+            // // 烧录第二个固件
+            // if (runCskBurn(m_burnCOM, 3000000, "0x1000", "./fw/arcs_adb.bin", output)) {
+            //     emit updateResult(row, "正常");
+            //     emit updateLog("烧录成功: " + output);
+            // } else {
+            //     emit updateResult(row, "异常");
+            //     emit updateLog("烧录失败: " + output);
+            // }
+
+            // emit updateLog(QString("已完成行 %1 (ID: %2): %3").arg(row).arg(rowId).arg(testName));
+            // emit updateProgress(row, 100); // 成功时设置进度为100%
+
             QString output;
             emit updateProgress(row, 20); // 先将进度设为20%
-            
-            // 使用配置文件中的COM口进行烧录
-            qDebug() << "正在使用" << m_burnCOM << "烧录固件";
-            if (runCskBurn(m_burnCOM, 115200, "0x0", "d:/py/qtqbj/bin/test.bin", output)) {
-                emit updateProgress(row, 100); // 成功时设置进度为100%
+            if (runCskBurn(m_burnCOM, 3000000, "0x0", "./fw/ap.bin", output)) {
                 emit updateResult(row, "正常");
                 emit updateLog("烧录成功: " + output);
             } else {
-                emit updateProgress(row, 0); // 失败时重置进度
                 emit updateResult(row, "异常");
                 emit updateLog("烧录失败: " + output);
             }
-            emit updateLog("已完成行 " + QString::number(row) + ": " + testName);
+            emit updateProgress(row, 100); // 成功时设置进度为100%
         } 
-        else if (row == 1) {
+        else if (rowId == "A2") {
+            QString output;
+            emit updateProgress(row, 20); 
+            if (runCskBurn(m_burnCOM, 3000000, "0xE00000", "./fw/cp.bin", output)) {
+                emit updateResult(row, "正常");
+                emit updateLog("烧录成功: " + output);
+            } else {
+                emit updateResult(row, "异常");
+                emit updateLog("烧录失败: " + output);
+            }
+            emit updateProgress(row, 100); // 成功时设置进度为100%
+        }
+        else if (rowId == "A3") {
+            QString output;
+            emit updateProgress(row, 20); 
+            if (runCskBurn(m_burnCOM, 3000000, "0x200000", "./fw/respak.bin", output)) {
+                emit updateResult(row, "正常");
+                emit updateLog("烧录成功: " + output);
+            } else {
+                emit updateResult(row, "异常");
+                emit updateLog("烧录失败: " + output);
+            }
+            emit updateProgress(row, 100); // 成功时设置进度为100%
+        }
+
+
+        else if (rowId == "B") {
             emit updateLog("正在测量电流...");
             emit updateProgress(row, 20); // 先将进度设为20%
            
@@ -125,11 +179,9 @@ void TestThread::run()
             // 需要在主线程中显示对话框
             QMetaObject::invokeMethod(QApplication::instance(), [this, row, testName]() {
                 QString message = "请确认测试项: " + testName;
-                
                 QMessageBox msgBox;
                 msgBox.setWindowTitle("测试确认");
                 msgBox.setText(message);
-                
                 // 添加Pass和Fail两个按钮
                 QPushButton *passButton = msgBox.addButton("通过(Pass)", QMessageBox::AcceptRole);
                 QPushButton *failButton = msgBox.addButton("失败(Fail)", QMessageBox::RejectRole);
@@ -174,7 +226,7 @@ bool TestThread::runCskBurn(const QString &comPort, int baudRate, const QString 
     }
     
     // 等待进程完成，可能需要更长的超时时间
-    if (!process.waitForFinished(30000)) {
+    if (!process.waitForFinished(80000)) {
         output = "执行cskburn命令超时";
         process.kill();
         return false;

@@ -111,12 +111,19 @@ void MainWindow::setupUi_()
     }
 
 
+    // 隐藏第一列（ID列）
+    table_widget->hideColumn(0);
+
     for (int row = 0; row < rowsArray.size(); row++) {
         QJsonObject rowObj = rowsArray[row].toObject();
         
+        // 添加ID列，但隐藏显示
+        QTableWidgetItem *idItem = new QTableWidgetItem(rowObj["id"].toString());
+        idItem->setTextAlignment(Qt::AlignCenter);
+        table_widget->setItem(row, 0, idItem);
 
         QTableWidgetItem *nameItem = new QTableWidgetItem(QString(" %1").arg(rowObj["name"].toString()));
-        table_widget->setItem(row, 0, nameItem);
+        table_widget->setItem(row, 1, nameItem);
         
         // 测试模式列
         QString modeText = rowObj["mode"].toString();
@@ -129,11 +136,11 @@ void MainWindow::setupUi_()
             modeEdit->setStyleSheet("background-color: lightblue;");
         }
         
-        table_widget->setCellWidget(row, 1, modeEdit);
+        table_widget->setCellWidget(row, 2, modeEdit);
         
         // 测试内容列
         QLineEdit *contentEdit = new QLineEdit(rowObj["content"].toString());
-        table_widget->setCellWidget(row, 2, contentEdit);
+        table_widget->setCellWidget(row, 3, contentEdit);
         
         // 进度列 - 使用进度条
         QProgressBar *progressBar = new QProgressBar();
@@ -145,27 +152,19 @@ void MainWindow::setupUi_()
         // 设置样式表，使用灰色背景而不是默认的绿色
         progressBar->setStyleSheet("QProgressBar {background-color: #e0e0e0; border: 1px solid #c0c0c0; border-radius: 2px; padding: 1px;} "
                                   "QProgressBar::chunk {background-color: #c0c0c0; width: 1px;}");
-        table_widget->setCellWidget(row, 3, progressBar);
+        table_widget->setCellWidget(row, 4, progressBar);
         
-        // 结果列
-        QJsonObject resultObj = rowObj["result"].toObject();
-        if (resultObj["type"].toString() == "combo") {
-            QComboBox *resultCombo = new QComboBox();
-            QJsonArray itemsArray = resultObj["items"].toArray();
-            QStringList items;
-            for (const QJsonValue &item : itemsArray) {
-                items << item.toString();
-            }
-            resultCombo->addItems(items);
-            if (resultObj.contains("default")) {
-                resultCombo->setCurrentIndex(resultObj["default"].toInt());
-            }
-            table_widget->setCellWidget(row, 4, resultCombo);
-        }
+        // 结果列 - 使用固定的下拉菜单
+        QComboBox *resultCombo = new QComboBox();
+        QStringList items;
+        items << "正常" << "异常";
+        resultCombo->addItems(items);
+        resultCombo->setCurrentIndex(1); // 默认选择异常
+        table_widget->setCellWidget(row, 5, resultCombo);
         
         // 备注列
         QLineEdit *noteEdit = new QLineEdit(rowObj["note"].toString());
-        table_widget->setCellWidget(row, 5, noteEdit);
+        table_widget->setCellWidget(row, 6, noteEdit);
     }
     
     mainLayout->addWidget(table_widget);
@@ -533,14 +532,14 @@ void MainWindow::start_test_content()
     });
     
     connect(test_thread, &TestThread::updateProgress, this, [this](int row, int value) {
-        QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 3));
+        QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 4));
         if (progressBar) {
             progressBar->setValue(value);
         }
     });
     
     connect(test_thread, &TestThread::updateResult, this, [this](int row, const QString &result) {
-        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 4));
+        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
         if (resultCombo) {
             int index = resultCombo->findText(result);
             if (index >= 0) {
@@ -637,22 +636,19 @@ void MainWindow::resetTable()
         }
         
         // 进度列 - 重置进度条为0
-        QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 3));
+        QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 4));
         if (progressBar) {
             progressBar->setValue(0);
         }
         
-        // 结果列
-        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 4));
+        // 结果列 - 重置为异常
+        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
         if (resultCombo) {
-            QJsonObject resultObj = rowObj["result"].toObject();
-            if (resultObj.contains("default")) {
-                resultCombo->setCurrentIndex(resultObj["default"].toInt());
-            }
+            resultCombo->setCurrentIndex(1); // 默认固定为异常
         }
         
         // 备注列
-        QLineEdit *noteEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 5));
+        QLineEdit *noteEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 6));
         if (noteEdit) {
             noteEdit->setText(rowObj["note"].toString());
         }
@@ -688,14 +684,14 @@ void MainWindow::start_test_content_12()
     });
     
     connect(test_thread, &TestThread::updateProgress, this, [this](int row, int value) {
-        QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 3));
+        QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 4));
         if (progressBar) {
             progressBar->setValue(value);
         }
     });
     
     connect(test_thread, &TestThread::updateResult, this, [this](int row, const QString &result) {
-        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 4));
+        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
         if (resultCombo) {
 
             int index = resultCombo->findText(result);
