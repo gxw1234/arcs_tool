@@ -4,7 +4,9 @@ debug/smartpowercontroller.o
 debug/testthread.o
 debug/blu_serial.o
 debug/blu_protocol.o
+debug/adbcontroller.o
 debug/moc_mainwindow.o
 debug/moc_testthread.o
 debug/moc_blu_serial.o
 debug/moc_blu_protocol.o
+debug/moc_adbcontroller.o

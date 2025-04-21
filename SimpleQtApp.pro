@@ -15,13 +15,15 @@ SOURCES += \
     smartpowercontroller.cpp \
     testthread.cpp \
     blu_serial.cpp \
-    blu_protocol.cpp
+    blu_protocol.cpp \
+    adbcontroller.cpp
 
 HEADERS += \
     mainwindow.h \
     smartpowercontroller.h \
     testthread.h \
     blu_serial.h \
-    blu_protocol.h
+    blu_protocol.h \
+    adbcontroller.h
 
 

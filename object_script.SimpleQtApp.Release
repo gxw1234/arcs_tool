@@ -4,7 +4,9 @@ release/smartpowercontroller.o
 release/testthread.o
 release/blu_serial.o
 release/blu_protocol.o
+release/adbcontroller.o
 release/moc_mainwindow.o
 release/moc_testthread.o
 release/moc_blu_serial.o
 release/moc_blu_protocol.o
+release/moc_adbcontroller.o

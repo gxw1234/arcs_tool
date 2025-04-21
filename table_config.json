@@ -35,6 +35,22 @@
             "note": ""
         },
         {
+            "id": "B2",
+            "name": "adb_push_pull",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "B3",
+            "name": "adb_push_pull",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
             "id": "C",
             "name": "wifi扫描",
             "mode": "自动",

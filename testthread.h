@@ -6,6 +6,7 @@
 #include <QString>
 #include "blu_serial.h"
 #include "blu_protocol.h"
+#include "adbcontroller.h"
 
 class TestThread : public QThread
 {
@@ -26,10 +27,19 @@ signals:
 private:
     QTableWidget *table_widget;
     BLUSerial *m_bluSerial; // BLU设备串口对象
+    ADBController m_adbController; // ADB控制器全局实例
     bool stopRequested;
     
     // 烧录使用的COM口
     QString m_burnCOM;
+    
+    // 计算文件的MD5值
+    QString calculateFileMD5(const QString &filePath);
+
+    float m_currentSampleAvg;
+    int m_sampleCount;
+
+    void runTarget(int targetNum);
 
     // 执行cskburn.exe命令烧录固件
     bool runCskBurn(const QString &comPort, int baudRate, const QString &address, const QString &binFile, QString &output);

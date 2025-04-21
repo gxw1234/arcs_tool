@@ -1,10 +1,16 @@
 #include "testthread.h"
 #include <QDebug>
+#include <QThread>
+#include <QTableWidget>
+#include <QString>
 #include <QLineEdit>
 #include <QComboBox>
+#include <QProgressBar>
+#include <QFile>
 #include <QProcess>
 #include <QDir>
 #include <QFileInfo>
+#include <QCryptographicHash>
 #include <QCoreApplication>
 #include <QApplication>
 #include <QMessageBox>
@@ -48,65 +54,148 @@ void TestThread::run()
         QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
         QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
         QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 4));
-
-
-
         if (rowId == "A1") {
-            QString output;
-            progressBar->setValue(20);
-            if (runCskBurn(m_burnCOM, 3000000, "0x0", "./fw/ap.bin", output)) {
-                contentEdit->setText("AP固件烧录成功");
-                resultCombo->setCurrentIndex(0);
-                emit updateLog("烧录成功: " + output);
-            } else {
-                contentEdit->setText("AP固件烧录失败");
-                resultCombo->setCurrentIndex(1);
-                emit updateLog("烧录失败: " + output);
-            }
-            emit updateLog("AP固件烧录日志: " + output);
-            progressBar->setValue(100);
+            // QString output;
+            // progressBar->setValue(20);
+            // if (runCskBurn(m_burnCOM, 3000000, "0x0", "./fw/ap.bin", output)) {
+            //     contentEdit->setText("AP固件烧录成功");
+            //     resultCombo->setCurrentIndex(0);
+
+            // } else {
+            //     contentEdit->setText("AP固件烧录失败");
+            //     resultCombo->setCurrentIndex(1);
+
+            // }
+            // emit updateLog("AP固件烧录日志: " + output);
+
+            // progressBar->setValue(100);
             
         } 
         else if (rowId == "A2") {
-            QString output;
-            progressBar->setValue(20);
-            if (runCskBurn(m_burnCOM, 3000000, "0xE00000", "./fw/cp.bin", output)) {
-                contentEdit->setText("CP固件烧录成功");
-                resultCombo->setCurrentIndex(0);
-                emit updateLog("烧录成功: " + output);
-            } else {
-                contentEdit->setText("CP固件烧录失败");
-                resultCombo->setCurrentIndex(1);
-                emit updateLog("烧录失败: " + output);
-            }
-            emit updateLog("CP固件烧录日志: " + output);
-            progressBar->setValue(100);
+            // QString output;
+
+            // if (runCskBurn(m_burnCOM, 3000000, "0xE00000", "./fw/cp.bin", output)) {
+            //     contentEdit->setText("CP固件烧录成功");
+            //     resultCombo->setCurrentIndex(0);
+            //     emit updateLog("烧录成功: " + output);
+            // } else {
+            //     contentEdit->setText("CP固件烧录失败");
+            //     resultCombo->setCurrentIndex(1);
+            //     emit updateLog("烧录失败: " + output);
+            // }
+            // emit updateLog("CP固件烧录日志: " + output);
+
         }
         else if (rowId == "A3") {
-            QString output;
-            progressBar->setValue(20);
-            if (runCskBurn(m_burnCOM, 3000000, "0x200000", "./fw/respak.bin", output)) {
-                contentEdit->setText("REPAK固件烧录成功");
-                resultCombo->setCurrentIndex(0);    
-                emit updateLog("烧录成功: " + output);
-            } else {
-                contentEdit->setText("REPAK固件烧录失败");
-                resultCombo->setCurrentIndex(1);
-                emit updateLog("烧录失败: " + output);
-            }
-            emit updateLog("REPAK固件烧录日志: " + output);
-            progressBar->setValue(100);
+            // QString output;
+
+            // if (runCskBurn(m_burnCOM, 3000000, "0x200000", "./fw/respak.bin", output)) {
+            //     contentEdit->setText("REPAK固件烧录成功");
+            //     resultCombo->setCurrentIndex(0);    
+            //     emit updateLog("烧录成功: " + output);
+            // } else {
+            //     contentEdit->setText("REPAK固件烧录失败");
+            //     resultCombo->setCurrentIndex(1);
+            //     emit updateLog("烧录失败: " + output);
+            // }
+            // emit updateLog("REPAK固件烧录日志: " + output);
+
         }
         else if (rowId == "B1") {
+            emit updateProgress(row, 20);
+            emit updateLog("正在检测ADB设备...");
+            contentEdit->setText("正在获取设备信息...");
+
+            // 使用成员变量m_adbController而不是创建新实例
+            QStringList devices = m_adbController.getDevices();
+            if (!devices.isEmpty()) {
+                QString deviceInfo = "\n检测到" + QString::number(devices.size()) + "个设备:\n";
+                QString deviceId = devices.first();
+                for (const QString &device : devices) {
+                    deviceInfo += "- " + device + "\n";
+                }
+                emit updateLog("检测到ADB设备: " + deviceInfo);
+                contentEdit->setText("设备ID：" + deviceId);
+                resultCombo->setCurrentIndex(0);  
+            } else {
+                emit updateLog("未检测到ADB设备");
+                contentEdit->setText("未发现ADB设备");
+                resultCombo->setCurrentIndex(1);  
+            }
+            emit updateProgress(row, 100);
+        }
+        else if (rowId == "B2")
+        {
+            emit updateProgress(row, 20);
+            emit updateLog("正在测试ADB文件传输...");
+            contentEdit->setText("开始测试ADB push和pull");
+            QString localPushFile = "./test_push.bin";
+            QString remoteDir = "/RAW/SDRAW/40000000";
+            QString remotePullFile = remoteDir + "/100000";
+            QString localPullFile = "./test_pull.bin";
             
+            emit updateProgress(row, 40);
+            emit updateLog("开始ADB push测试...");
+            
+            bool pushSuccess = false;
+            QString pushResult = m_adbController.pushFile(localPushFile, remoteDir, &pushSuccess);
+            emit updateLog("推送结果: " + pushResult);
+ 
+            
+            emit updateProgress(row, 70);
+            emit updateLog("开始ADB pull测试...");
+            
+            
+            bool pullSuccess = false;
+            QString pullResult = m_adbController.pullFile(remotePullFile, localPullFile, &pullSuccess);
+            emit updateLog("拉取结果: " + pullResult);
+            
+   
+            // 验证拉取的文件
+            QFile pulledFile(localPullFile);
+            if (!pulledFile.exists()) {
+                contentEdit->setText("文件验证失败");
+                resultCombo->setCurrentIndex(1);  // 异常
+                emit updateProgress(row, 0);
+               
+            }
+            
+            QString md5Original = calculateFileMD5(localPushFile);
+            QString md5Downloaded = calculateFileMD5(localPullFile);
+            
+            emit updateLog("原始MD5: " + md5Original);
+            emit updateLog("下载MD5: " + md5Downloaded);
+            if (md5Original != md5Downloaded) {
+                contentEdit->setText("文件MD5不匹配" + md5Original + " vs " + md5Downloaded);
+                resultCombo->setCurrentIndex(1);  
+            }
+            else{
+                resultCombo->setCurrentIndex(0);
+                contentEdit->setText("ADB push/pull测试成功，MD5匹配" + md5Original);
+            }
+            emit updateProgress(row, 100);
         }
 
+        else if(rowId == "B3"){
+            emit updateProgress(row, 20);
+            emit updateLog("正在测试ADB shell命令...");
+            contentEdit->setText("测试背光控制");
+            bool shellSuccess = false;
+            QString command = "test_backlight_cmd set 100";
 
-
-
-        else if (rowId == "B2") {
+            QString output = m_adbController.executeShellCommand(command, &shellSuccess);
+            emit updateLog("命令输出: \n" + output);
+            if (output.contains("Return: 0")) {
+                contentEdit->setText("背光设置成功，已自动终止");
+                resultCombo->setCurrentIndex(0); // 设置为正常
+            } else {
+                contentEdit->setText("背光设置失败");
+                resultCombo->setCurrentIndex(1); // 设置为异常
+            }
+            emit updateProgress(row, 100);
+        }
+        else if (rowId == "B4") {
             emit updateLog("正在测量电流...");
-            progressBar->setValue(20); // 先将进度设为20%
             emit updateLog("开始连续测量...");
             if (m_bluSerial && !m_bluSerial->startMeasurement()) {
                 emit updateLog("开始测量失败");
@@ -135,8 +224,7 @@ void TestThread::run()
                         emit updateLog(QString("平均电流: %1 mA").arg(avgCurrent/1000.0, 0, 'f', 3));
                         emit updateLog(QString("电源电压: %1 V").arg(voltage, 0, 'f', 3));
                         emit updateLog(QString("功耗: %1 mW").arg(power * 1000, 0, 'f', 3));
-                        
-                        progressBar->setValue(100); // 将电流值作为测试结果
+                    
                         emit updateProgress(row, 100); // 设置进度为100%
                     } else {
                         emit updateLog("未收集到有效样本");
@@ -190,6 +278,21 @@ void TestThread::run()
     }
     
     emit updateLog("所有测试已完成");
+}
+
+QString TestThread::calculateFileMD5(const QString &filePath)
+{
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return QString();
+    }
+    
+    QCryptographicHash hash(QCryptographicHash::Md5);
+    if (hash.addData(&file)) {
+        return hash.result().toHex();
+    }
+    
+    return QString();
 }
 
 bool TestThread::runCskBurn(const QString &comPort, int baudRate, const QString &address, const QString &binFile, QString &output)
