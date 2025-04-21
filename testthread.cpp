@@ -43,79 +43,70 @@ void TestThread::run()
         QString rowId = idItem ? idItem->text() : "";
         QString testName = table_widget->item(row, 1)->text().trimmed();
         emit updateLog(QString("开始测试行 %1 (ID: %2): %3").arg(row).arg(rowId).arg(testName));
-        
-        // 使用ID而不是行号来判断测试类型
+
+        // 分别设置  结果  内容 进度
+        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
+        QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
+        QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 4));
+
+
+
         if (rowId == "A1") {
-           
-            // QString output;
-            // emit updateProgress(row, 20); // 先将进度设为20%
-            
-            // // 使用配置文件中的COM口进行烧录
-            // qDebug() << "正在使用" << m_burnCOM << "烧录固件";
-            // if (runCskBurn(m_burnCOM, 3000000, "0x0", "./fw/snb.bin", output)) {
-               
-            //     emit updateResult(row, "正常");
-            //     emit updateLog("烧录成功: " + output);
-            // } else {
-            //     emit updateResult(row, "异常");
-            //     emit updateLog("烧录失败: " + output);
-            // }
-
-            // emit updateProgress(row, 40); // 烧录完成后将进度设为40%
-            
-            // // 烧录第二个固件
-            // if (runCskBurn(m_burnCOM, 3000000, "0x1000", "./fw/arcs_adb.bin", output)) {
-            //     emit updateResult(row, "正常");
-            //     emit updateLog("烧录成功: " + output);
-            // } else {
-            //     emit updateResult(row, "异常");
-            //     emit updateLog("烧录失败: " + output);
-            // }
-
-            // emit updateLog(QString("已完成行 %1 (ID: %2): %3").arg(row).arg(rowId).arg(testName));
-            // emit updateProgress(row, 100); // 成功时设置进度为100%
-
             QString output;
-            emit updateProgress(row, 20); // 先将进度设为20%
+            progressBar->setValue(20);
             if (runCskBurn(m_burnCOM, 3000000, "0x0", "./fw/ap.bin", output)) {
-                emit updateResult(row, "正常");
+                contentEdit->setText("AP固件烧录成功");
+                resultCombo->setCurrentIndex(0);
                 emit updateLog("烧录成功: " + output);
             } else {
-                emit updateResult(row, "异常");
+                contentEdit->setText("AP固件烧录失败");
+                resultCombo->setCurrentIndex(1);
                 emit updateLog("烧录失败: " + output);
             }
-            emit updateProgress(row, 100); // 成功时设置进度为100%
+            emit updateLog("AP固件烧录日志: " + output);
+            progressBar->setValue(100);
+            
         } 
         else if (rowId == "A2") {
             QString output;
-            emit updateProgress(row, 20); 
+            progressBar->setValue(20);
             if (runCskBurn(m_burnCOM, 3000000, "0xE00000", "./fw/cp.bin", output)) {
-                emit updateResult(row, "正常");
+                contentEdit->setText("CP固件烧录成功");
+                resultCombo->setCurrentIndex(0);
                 emit updateLog("烧录成功: " + output);
             } else {
-                emit updateResult(row, "异常");
+                contentEdit->setText("CP固件烧录失败");
+                resultCombo->setCurrentIndex(1);
                 emit updateLog("烧录失败: " + output);
             }
-            emit updateProgress(row, 100); // 成功时设置进度为100%
+            emit updateLog("CP固件烧录日志: " + output);
+            progressBar->setValue(100);
         }
         else if (rowId == "A3") {
             QString output;
-            emit updateProgress(row, 20); 
+            progressBar->setValue(20);
             if (runCskBurn(m_burnCOM, 3000000, "0x200000", "./fw/respak.bin", output)) {
-                emit updateResult(row, "正常");
+                contentEdit->setText("REPAK固件烧录成功");
+                resultCombo->setCurrentIndex(0);    
                 emit updateLog("烧录成功: " + output);
             } else {
-                emit updateResult(row, "异常");
+                contentEdit->setText("REPAK固件烧录失败");
+                resultCombo->setCurrentIndex(1);
                 emit updateLog("烧录失败: " + output);
             }
-            emit updateProgress(row, 100); // 成功时设置进度为100%
+            emit updateLog("REPAK固件烧录日志: " + output);
+            progressBar->setValue(100);
+        }
+        else if (rowId == "B1") {
+            
         }
 
 
-        else if (rowId == "B") {
+
+
+        else if (rowId == "B2") {
             emit updateLog("正在测量电流...");
-            emit updateProgress(row, 20); // 先将进度设为20%
-           
+            progressBar->setValue(20); // 先将进度设为20%
             emit updateLog("开始连续测量...");
             if (m_bluSerial && !m_bluSerial->startMeasurement()) {
                 emit updateLog("开始测量失败");
@@ -145,22 +136,18 @@ void TestThread::run()
                         emit updateLog(QString("电源电压: %1 V").arg(voltage, 0, 'f', 3));
                         emit updateLog(QString("功耗: %1 mW").arg(power * 1000, 0, 'f', 3));
                         
-                        // 将电流值作为测试结果
-                        emit updateResult(row, QString("%1 mA").arg(avgCurrent/1000.0, 0, 'f', 3));
+                        progressBar->setValue(100); // 将电流值作为测试结果
                         emit updateProgress(row, 100); // 设置进度为100%
                     } else {
                         emit updateLog("未收集到有效样本");
-                        emit updateResult(row, "异常");
                         emit updateProgress(row, 0); // 失败时重置进度
                     }
                 } else {
                     emit updateLog("未读取到数据");
-                    emit updateResult(row, "异常");
                     emit updateProgress(row, 0); // 失败时重置进度
                 }
             } else {
                 emit updateLog("BLU设备未连接");
-                emit updateResult(row, "异常");
                 emit updateProgress(row, 0); // 失败时重置进度
             }
             
@@ -168,37 +155,36 @@ void TestThread::run()
             if (m_bluSerial) {
                 m_bluSerial->stopMeasurement();
             }
-            
             emit updateLog("已完成行 " + QString::number(row) + ": 测量电流");
 
         }
         else {
-            // 非第一行弹出对话框
+          
             emit updateProgress(row, 20); // 先将进度设为20%
             
-            // 需要在主线程中显示对话框
-            QMetaObject::invokeMethod(QApplication::instance(), [this, row, testName]() {
-                QString message = "请确认测试项: " + testName;
-                QMessageBox msgBox;
-                msgBox.setWindowTitle("测试确认");
-                msgBox.setText(message);
-                // 添加Pass和Fail两个按钮
-                QPushButton *passButton = msgBox.addButton("通过(Pass)", QMessageBox::AcceptRole);
-                QPushButton *failButton = msgBox.addButton("失败(Fail)", QMessageBox::RejectRole);
-                msgBox.exec(); // 显示对话框并等待用户响应
-                // 根据用户选择更新进度、结果和日志
-                if (msgBox.clickedButton() == passButton) {
-                    // 用户点击Pass，设置进度为100%
-                    emit updateProgress(row, 100);
-                    emit updateResult(row, "正常"); // 更新结果列为“正常”
-                    emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
-                } else if (msgBox.clickedButton() == failButton) {
-                    // 用户点击Fail，设置进度为0或显示失败状态
-                    emit updateProgress(row, 0); // 将进度设置为0
-                    emit updateResult(row, "异常"); // 更新结果列为“异常”
-                    emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
-                }
-            }, Qt::BlockingQueuedConnection); // 使用阻塞方式确保对话框处理完成后再继续
+            // // 需要在主线程中显示对话框
+            // QMetaObject::invokeMethod(QApplication::instance(), [this, row, testName]() {
+            //     QString message = "请确认测试项: " + testName;
+            //     QMessageBox msgBox;
+            //     msgBox.setWindowTitle("测试确认");
+            //     msgBox.setText(message);
+            //     // 添加Pass和Fail两个按钮
+            //     QPushButton *passButton = msgBox.addButton("通过(Pass)", QMessageBox::AcceptRole);
+            //     QPushButton *failButton = msgBox.addButton("失败(Fail)", QMessageBox::RejectRole);
+            //     msgBox.exec(); // 显示对话框并等待用户响应
+            //     // 根据用户选择更新进度、结果和日志
+            //     if (msgBox.clickedButton() == passButton) {
+            //         // 用户点击Pass，设置进度为100%
+            //         emit updateProgress(row, 100);
+            //         emit updateResult(row, "正常"); // 更新结果列为“正常”
+            //         emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
+            //     } else if (msgBox.clickedButton() == failButton) {
+            //         // 用户点击Fail，设置进度为0或显示失败状态
+            //         emit updateProgress(row, 0); // 将进度设置为0
+            //         emit updateResult(row, "异常"); // 更新结果列为“异常”
+            //         emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
+            //     }
+            // }, Qt::BlockingQueuedConnection); // 使用阻塞方式确保对话框处理完成后再继续
         }
         QThread::msleep(500);
     }

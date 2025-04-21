@@ -538,6 +538,7 @@ void MainWindow::start_test_content()
         }
     });
     
+    //结果
     connect(test_thread, &TestThread::updateResult, this, [this](int row, const QString &result) {
         QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
         if (resultCombo) {
@@ -683,6 +684,7 @@ void MainWindow::start_test_content_12()
         show_log->append(message);
     });
     
+    //进度
     connect(test_thread, &TestThread::updateProgress, this, [this](int row, int value) {
         QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 4));
         if (progressBar) {
@@ -690,6 +692,7 @@ void MainWindow::start_test_content_12()
         }
     });
     
+    //结果
     connect(test_thread, &TestThread::updateResult, this, [this](int row, const QString &result) {
         QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
         if (resultCombo) {
