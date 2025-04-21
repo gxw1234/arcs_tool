@@ -40,7 +40,7 @@ void TestThread::requestStop()
 void TestThread::run()
 {
 
-    QThread::msleep(4000);
+    // QThread::msleep(4000);
     emit updateLog("自动化测试开始");
     
     for (int row = 0; row < table_widget->rowCount(); ++row) {
@@ -182,7 +182,6 @@ void TestThread::run()
             contentEdit->setText("测试背光控制");
             bool shellSuccess = false;
             QString command = "test_backlight_cmd set 100";
-
             QString output = m_adbController.executeShellCommand(command, &shellSuccess);
             emit updateLog("命令输出: \n" + output);
             if (output.contains("Return: 0")) {

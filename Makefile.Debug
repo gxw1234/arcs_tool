@@ -1533,6 +1533,10 @@ debug/adbcontroller.o: adbcontroller.cpp adbcontroller.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qsharedpointer_impl.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QElapsedTimer \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qelapsedtimer.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QTime \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qdatetime.h \
+		../../qt/5.12.2/mingw73_32/include/QtCore/QThread \
+		../../qt/5.12.2/mingw73_32/include/QtCore/qthread.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QCoreApplication \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qcoreapplication.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qeventloop.h

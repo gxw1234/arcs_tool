@@ -3,6 +3,8 @@
 #include <QFileInfo>
 #include <QDebug>
 #include <QElapsedTimer>
+#include <QTime>
+#include <QThread>
 #include <QCoreApplication>
 
 ADBController::ADBController(QObject *parent) : QObject(parent)
@@ -215,7 +217,7 @@ QString ADBController::pullFile(const QString &remotePath, const QString &localF
     return combinedOutput;
 }
 
-QString ADBController::executeShellCommand(const QString &command, bool *success, const QString &terminateKeyword)
+QString ADBController::executeShellCommand(const QString &command, bool *success)
 {
     if (m_adbPath.isEmpty() && !findADBPath()) {
         if (success) *success = false;
@@ -238,49 +240,86 @@ QString ADBController::executeShellCommand(const QString &command, bool *success
     }
     
     QString output;
-    bool terminated = false;
+    bool foundReturn = false;
+    int maxWaitTime = 10; // 最长等待时间（秒）
     
-    // 循环读取输出并检查关键字
+    // 记录开始时间
+    QTime startTime = QTime::currentTime();
+    
+    // 循环读取输出，直到进程结束或超时
     while (process.state() != QProcess::NotRunning) {
-        if (process.waitForReadyRead(100)) {
-            QByteArray newOutput = process.readAll();
-            QString newOutputStr = QString::fromLocal8Bit(newOutput);
-            output += newOutputStr;
+        // 检查是否超时
+        if (startTime.secsTo(QTime::currentTime()) > maxWaitTime) {
+            qDebug() << "命令执行超时，发送Ctrl+C";
             
-            // 检查是否包含终止关键字
-            if (!terminateKeyword.isEmpty() && output.contains(terminateKeyword)) {
-                qDebug() << "发现终止关键字，发送Ctrl+C";
+            // 发送Ctrl+C
+            QByteArray ctrlC;
+            ctrlC.append('\x03');
+            process.write(ctrlC);
+            
+            // 等待一下确保命令已经中断
+            process.waitForFinished(1000);
+            
+            // 如果仍未结束，强制终止
+            if (process.state() != QProcess::NotRunning) {
+                process.terminate();
+                process.waitForFinished(1000);
                 
-                // 发送Ctrl+C (0x03)
+                if (process.state() != QProcess::NotRunning) {
+                    process.kill();
+                }
+            }
+            
+            output += "\n[命令执行超时，已强制终止]";
+            break;
+        }
+        
+        // 等待并读取数据
+        if (process.waitForReadyRead(100)) {
+            QByteArray newData = process.readAll();
+            QString newOutput = QString::fromLocal8Bit(newData);
+            output += newOutput;
+            
+            // 检查是否包含"Return"关键字
+            if (newOutput.contains("Return")) {
+                qDebug() << "发现Return关键字，等待200ms后终止";
+                
+                // 等待200ms确保输出完整
+                QThread::msleep(200);
+                
+                // 发送Ctrl+C
                 QByteArray ctrlC;
                 ctrlC.append('\x03');
                 process.write(ctrlC);
-                terminated = true;
+                
+                foundReturn = true;
                 break;
             }
         }
+    }
+    
+    // 确保读取所有剩余输出
+    QByteArray remainingData = process.readAll();
+    if (!remainingData.isEmpty()) {
+        output += QString::fromLocal8Bit(remainingData);
+    }
+    
+    // 最终确保进程已经结束
+    if (process.state() != QProcess::NotRunning) {
+        process.terminate();
+        process.waitForFinished(1000);
         
-        // 小间隔等待
-        if (!process.waitForFinished(100)) {
-            // 继续waitForReadyRead循环
+        if (process.state() != QProcess::NotRunning) {
+            process.kill();
         }
     }
     
-    // 如果没有主动终止，等待命令正常结束
-    if (!terminated) {
-        process.waitForFinished(5000);
+    if (foundReturn) {
+        output += "\n[检测到Return关键字，命令已被终止]";
+        if (success) *success = true;
+    } else {
+        if (success) *success = false;
     }
     
-    // 读取所有剩余输出
-    QByteArray remainingOutput = process.readAll();
-    if (!remainingOutput.isEmpty()) {
-        output += QString::fromLocal8Bit(remainingOutput);
-    }
-    
-    if (terminated) {
-        output += "\n[检测到关键字，命令已被终止]";
-    }
-    
-    if (success) *success = true;
     return output;
 }

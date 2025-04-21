@@ -30,8 +30,8 @@ public:
     QString pushFile(const QString &localFile, const QString &remotePath, bool *success = nullptr);
     QString pullFile(const QString &remotePath, const QString &localFile, bool *success = nullptr);
     
-    // 交互式shell命令，自动在检测到指定关键字时终止进程
-    QString executeShellCommand(const QString &command, bool *success = nullptr, const QString &terminateKeyword = "Return");
+    // 交互式shell命令，自动在检测到Return关键字时终止进程
+    QString executeShellCommand(const QString &command, bool *success = nullptr);
 
 private:
     QString m_adbPath;
