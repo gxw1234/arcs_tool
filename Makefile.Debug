@@ -1274,8 +1274,6 @@ debug/testthread.o: testthread.cpp testthread.h \
 		../../qt/5.12.2/mingw73_32/include/QtGui/qtextoption.h \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/QComboBox \
 		../../qt/5.12.2/mingw73_32/include/QtWidgets/qcombobox.h \
-		../../qt/5.12.2/mingw73_32/include/QtWidgets/QProgressBar \
-		../../qt/5.12.2/mingw73_32/include/QtWidgets/qprogressbar.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QFile \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QDir \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qdir.h \

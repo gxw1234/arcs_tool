@@ -28,33 +28,21 @@ MainWindow::MainWindow(QWidget *parent)
     resize(600, 500);
     powerController = SmartPowerController::getInstance();
     setupUi_();
-    initSmartPowerDevice();
+
     
     // 读取配置文件
-    QSettings settings("d:/py/qtqbj/cfg.ini", QSettings::IniFormat);
+    QSettings settings("cfg.ini", QSettings::IniFormat);
     
     // 直接读取串口信息
     burnComPort = settings.value("Serial/BurnCOM").toString();
     bluComPort = settings.value("BLU/DeviceCOM").toString();
     bluVoltageValue = 4000; // 使用固定的默认值
     
-    qDebug() << "配置读取成功:";
-    qDebug() << "- 烧录COM口:" << burnComPort;
-    qDebug() << "- 设备COM口:" << bluComPort;
-    
     // 初始化协议实例
     bluProtocol = new BLUProtocol(this);
     
     // 初始化串口通信实例
     bluSerial = new BLUSerial(bluProtocol, this);
-    // QTimer *timer = new QTimer(this);
-    // connect(timer, &QTimer::timeout, this, &MainWindow::updateTime);
-    // timer->start(1000);
-
-    // statusTimer = new QTimer(this);
-    // connect(statusTimer, &QTimer::timeout, this, &MainWindow::updateDeviceStatus);
-    // // 初始更新时间
-    // updateTime();
 
 }
 
@@ -168,6 +156,8 @@ void MainWindow::setupUi_()
     
     mainLayout->addWidget(table_widget);
     show_log = new QTextEdit(this);
+    show_log->setReadOnly(true);
+    show_log->setMaximumHeight(200);
     mainLayout->addWidget(show_log);
     start_test = new QPushButton("开始测试", this);
     start_test->setDefault(true); // 设置为默认按钮，支持回车键触发
@@ -521,6 +511,8 @@ void MainWindow::start_test_content()
     
     // 创建并启动测试线程，传递烧录串口
     test_thread = new TestThread(table_widget, bluSerial, this, burnComPort);
+
+    connect(test_thread, &TestThread::updateBootTime, this, &MainWindow::onTestBootTime);
     
     // 连接测试线程的信号
     connect(test_thread, &TestThread::updateLog, this, [this](const QString &message) {
@@ -660,66 +652,110 @@ void MainWindow::resetTable()
     }
 }
 
-void MainWindow::start_test_content_12()
+void MainWindow::onTestBootTime(int row, bool on, int voltage)
 {
-    qDebug() << "开始测试";
+    QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
+    QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 4));
+    QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
     
-    resetTable();
-    
- 
-    if (test_thread && test_thread->isRunning()) {
-        test_thread->requestStop();
-        test_thread->wait();
-        delete test_thread;
-        test_thread = nullptr;
-    }
-    
-    test_thread = new TestThread(table_widget, bluSerial, this, burnComPort);
-    
-    connect(test_thread, &TestThread::updateLog, this, [this](const QString &message) {
-        show_log->append(message);
-    });
-    
-    //进度
-    connect(test_thread, &TestThread::updateProgress, this, [this](int row, int value) {
-        QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 4));
-        if (progressBar) {
-            progressBar->setValue(value);
+    if (on) {
+        // 上电操作
+        if (contentEdit) {
+            contentEdit->setText("设备上电中...");
         }
-    });
-    
-    //结果
-    connect(test_thread, &TestThread::updateResult, this, [this](int row, const QString &result) {
-        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
-        if (resultCombo) {
+        if (progressBar) {
+            progressBar->setValue(30);
+        }
 
-            int index = resultCombo->findText(result);
-            if (index >= 0) {
-                resultCombo->setCurrentIndex(index);
-            } else {
+        if (!bluSerial->setVoltage(voltage)) {
+            show_log->append(QString("设置源电压失败: %1 mV").arg(voltage));
+        }
+        else{
+            show_log->append(QString("已设置源电压为 %1 mV").arg(voltage));
+        }
+        
+        bluSerial->toggleDUTPower(false);
+        QThread::msleep(1000);
 
-                for (int i = 0; i < resultCombo->count(); ++i) {
-                    if (resultCombo->itemText(i).contains(result)) {
-                        resultCombo->setCurrentIndex(i);
-                        break;
+        if (!serialPort) {
+            serialPort = new QSerialPort(this);
+        }
+        if (!serialPort->isOpen()) {
+            QString portName = burnComPort; // 可以从设置中读取或使用固定值
+            serialPort->setPortName(portName);
+            serialPort->setBaudRate(921600);
+            if (serialPort->open(QIODevice::ReadWrite)) {
+                // 禁用DTR和RTS信号，避免影响设备启动
+                serialPort->setDataTerminalReady(false);
+                serialPort->setRequestToSend(false);
+                serialPort->clear();
+                show_log->append("串口已打开: " + portName);
+               
+                connect(serialPort, &QSerialPort::readyRead, this, [this]() {
+                    QByteArray data = serialPort->readAll();
+                    if (!data.isEmpty()) {
+                        // 记录首次收到数据的时间
+                        if (!hasReceivedFirstResponse) {
+                            firstResponseTime = QDateTime::currentDateTime();
+                            hasReceivedFirstResponse = true;
+                        }
                     }
-                }
+                });
+            } else {
+                show_log->append("串口打开失败: " + portName);
             }
         }
-    });
-    
-    connect(test_thread, &TestThread::finished, this, [this]() {
-        start_test->setEnabled(true);
+        QThread::msleep(1000);
         
-        if (test_thread) {
-            test_thread->deleteLater();
-            test_thread = nullptr;
+        // 上电前记录时间
+        powerOnTime = QDateTime::currentDateTime();
+        hasReceivedFirstResponse = false;
+        
+        bluSerial->toggleDUTPower(true);
+    } else {
+        // 断电操作
+        // 关闭串口
+        if (serialPort && serialPort->isOpen()) {
+            // 断开读取回调连接
+            disconnect(serialPort, &QSerialPort::readyRead, this, nullptr);
+            
+            serialPort->close();
         }
-        show_log->append("测试线程已完成");
-    });
-    
+       
+        // 计算并显示耗时
+        if (hasReceivedFirstResponse) {
+            int bootTime = powerOnTime.msecsTo(firstResponseTime);
+            QString bootTimeStr = QString("上电耗时: %1 ms").arg(bootTime);
+            
+            if (contentEdit) {
+                contentEdit->setText(bootTimeStr);
+            }
+            if (progressBar) {
+                progressBar->setValue(100);
+            }
+            if (resultCombo) {
+                resultCombo->setCurrentIndex(1); // 设置为"正常"
+            }
+            
+            show_log->append(bootTimeStr);
+        } else {
+            if (contentEdit) {
+                contentEdit->setText("未收到响应");
+            }
+            if (progressBar) {
+                progressBar->setValue(0);
+            }
+            if (resultCombo) {
+                resultCombo->setCurrentIndex(2); // 设置为"异常"
+            }
+            
+            show_log->append("未收到任何响应，无法计算启动耗时");
+        }
+    }
+}
 
-    start_test->setEnabled(false);
-    test_thread->start();
-    show_log->append("测试已开始，请等待...");
+// 处理测试线程上电/断电事件，操作表格指定行的控件
+void MainWindow::start_test_content_12()
+{
+
 }

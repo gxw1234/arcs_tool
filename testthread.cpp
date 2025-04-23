@@ -5,7 +5,7 @@
 #include <QString>
 #include <QLineEdit>
 #include <QComboBox>
-#include <QProgressBar>
+
 #include <QFile>
 #include <QProcess>
 #include <QDir>
@@ -14,7 +14,7 @@
 #include <QCoreApplication>
 #include <QApplication>
 #include <QMessageBox>
-#include <QProgressBar>
+
 #include <QPushButton>
 #include <QSettings>
 
@@ -39,7 +39,7 @@ void TestThread::requestStop()
 
 void TestThread::run()
 {
-    // QThread::msleep(4000);
+    QThread::msleep(3000);
     emit updateLog("自动化测试开始");
     for (int row = 0; row < table_widget->rowCount(); ++row) {
         // 获取当前行的ID和测试名称
@@ -50,60 +50,59 @@ void TestThread::run()
         // 分别设置  结果  内容 进度
         QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
         QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
-        QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 4));
         if (rowId == "A1") {
-            // QString output;
-            // progressBar->setValue(20);
-            // if (runCskBurn(m_burnCOM, 3000000, "0x0", "./fw/ap.bin", output)) {
-            //     contentEdit->setText("AP固件烧录成功");
-            //     resultCombo->setCurrentIndex(0);
+            emit updateProgress(row, 20);
+            QString output;
+            if (runCskBurn(m_burnCOM, 3000000, "0x0", "./fw/ap.bin", output)) {
+                contentEdit->setText("AP固件烧录成功");
+                resultCombo->setCurrentIndex(0);
 
-            // } else {
-            //     contentEdit->setText("AP固件烧录失败");
-            //     resultCombo->setCurrentIndex(1);
+            } else {
+                contentEdit->setText("AP固件烧录失败");
+                resultCombo->setCurrentIndex(1);
 
-            // }
-            // emit updateLog("AP固件烧录日志: " + output);
-
-            // progressBar->setValue(100);
+            }
+            emit updateLog("AP固件烧录日志: " + output);
+            emit updateProgress(row, 100);
             
         } 
         else if (rowId == "A2") {
-            // QString output;
+            emit updateProgress(row, 20);
+            QString output;
 
-            // if (runCskBurn(m_burnCOM, 3000000, "0xE00000", "./fw/cp.bin", output)) {
-            //     contentEdit->setText("CP固件烧录成功");
-            //     resultCombo->setCurrentIndex(0);
-            //     emit updateLog("烧录成功: " + output);
-            // } else {
-            //     contentEdit->setText("CP固件烧录失败");
-            //     resultCombo->setCurrentIndex(1);
-            //     emit updateLog("烧录失败: " + output);
-            // }
-            // emit updateLog("CP固件烧录日志: " + output);
-
+            if (runCskBurn(m_burnCOM, 3000000, "0xE00000", "./fw/cp.bin", output)) {
+                contentEdit->setText("CP固件烧录成功");
+                resultCombo->setCurrentIndex(0);
+                emit updateLog("烧录成功: " + output);
+            } else {
+                contentEdit->setText("CP固件烧录失败");
+                resultCombo->setCurrentIndex(1);
+                emit updateLog("烧录失败: " + output);
+            }
+            emit updateLog("CP固件烧录日志: " + output);
+            emit updateProgress(row, 100);
         }
         else if (rowId == "A3") {
-            // QString output;
-
-            // if (runCskBurn(m_burnCOM, 3000000, "0x200000", "./fw/respak.bin", output)) {
-            //     contentEdit->setText("REPAK固件烧录成功");
-            //     resultCombo->setCurrentIndex(0);    
-            //     emit updateLog("烧录成功: " + output);
-            // } else {
-            //     contentEdit->setText("REPAK固件烧录失败");
-            //     resultCombo->setCurrentIndex(1);
-            //     emit updateLog("烧录失败: " + output);
-            // }
-            // emit updateLog("REPAK固件烧录日志: " + output);
+            emit updateProgress(row, 20);
+            QString output;
+            if (runCskBurn(m_burnCOM, 3000000, "0x200000", "./fw/respak.bin", output)) {
+                contentEdit->setText("REPAK固件烧录成功");
+                resultCombo->setCurrentIndex(0);    
+                emit updateLog("烧录成功: " + output);
+            } else {
+                contentEdit->setText("REPAK固件烧录失败");
+                resultCombo->setCurrentIndex(1);
+                emit updateLog("烧录失败: " + output);
+            }
+            emit updateLog("REPAK固件烧录日志: " + output);
+            emit updateProgress(row, 100);
 
         }
         else if (rowId == "B1") {
+            QThread::msleep(3000);
             emit updateProgress(row, 20);
             emit updateLog("正在检测ADB设备...");
             contentEdit->setText("正在获取设备信息...");
-
-            // 使用成员变量m_adbController而不是创建新实例
             QStringList devices = m_adbController.getDevices();
             if (!devices.isEmpty()) {
                 QString deviceInfo = "\n检测到" + QString::number(devices.size()) + "个设备:\n";
@@ -172,7 +171,6 @@ void TestThread::run()
             }
             emit updateProgress(row, 100);
         }
-
         else if(rowId == "B3"){
             emit updateProgress(row, 20);
             emit updateLog("正在测试ADB shell命令...");
@@ -271,10 +269,231 @@ void TestThread::run()
             }
             emit updateProgress(row, 80);
         }
-        else {
-          
-            emit updateProgress(row, 20); // 先将进度设为20%
+        else if (rowId == "C2"){
+            emit updateProgress(row, 20);
+            m_bluSerial->toggleDUTPower(false);
+            QThread::msleep(100);
+            m_bluSerial->toggleDUTPower(true);
+            QThread::msleep(3000);
+            emit updateProgress(row, 40);
+            emit updateLog("正在检测ADB设备...");
+            contentEdit->setText("正在获取设备信息...");
+            QStringList devices = m_adbController.getDevices();
+            if (!devices.isEmpty()) {
+                QString deviceInfo = "\n检测到" + QString::number(devices.size()) + "个设备:\n";
+                QString deviceId = devices.first();
+                for (const QString &device : devices) {
+                    deviceInfo += "- " + device + "\n";
+                }
+                emit updateLog("检测到ADB设备: " + deviceInfo);
+                contentEdit->setText("设备ID：" + deviceId);
+                resultCombo->setCurrentIndex(0);  
+            } else {
+                emit updateLog("未检测到ADB设备");
+                contentEdit->setText("未发现ADB设备");
+                resultCombo->setCurrentIndex(1);  
+            }
+            emit updateProgress(row, 100);
+        }
+        else if (rowId == "D1") {
+            emit updateBootTime(row, true, 3500); 
+            QThread::msleep(4000);
+            emit updateBootTime(row, false);
+        }
+        else if (rowId == "D2") {
+            emit updateBootTime(row, true, 4000); 
+            QThread::msleep(4000);
+            emit updateBootTime(row, false);
+        }
+        else if (rowId == "D3") {
+            emit updateBootTime(row, true, 4500); 
+            QThread::msleep(4000);
+            emit updateBootTime(row, false);
+        }
+        else if (rowId == "D4") {
+            emit updateBootTime(row, true, 5000); 
+            QThread::msleep(4000);
+            emit updateBootTime(row, false);
+        }
+        else if (rowId == "E1") {
+            emit updateProgress(row, 20);
+           
+            emit updateLog("开始连续测量...");
+            if (m_bluSerial && !m_bluSerial->startMeasurement()) {
+                emit updateLog("开始测量失败");
+                return;
+            }
+           
+            QThread::msleep(2000);
+            if (m_bluSerial && m_bluSerial->isConnected()) {
+                QByteArray data = m_bluSerial->readData(15000); // 限制最多15000字节
+                emit updateLog(QString("读取到原始数据: %1 字节").arg(data.size()));
+                if (!data.isEmpty()) {
+                    QByteArray remainder; // 创建一个临时变量传递给processSamples
+                    QVector<double> samples = m_bluSerial->getProtocol()->processSamples(data, remainder);
+                    // 显示样本数量和平均值
+                    if (!samples.isEmpty()) {
+                        double avgCurrent = 0.0;
+                        for (double sample : samples) {
+                            avgCurrent += sample;
+                        }
+                        avgCurrent /= samples.size();
+                        
+                        // 计算功率 P = U * I
+                        double voltage = m_bluSerial->getProtocol()->currentVdd() / 1000.0; // 源电压（V）
+                        double power = voltage * avgCurrent / 1000000.0; // 功率（W）
+                        
+                        // 统一使用mA单位显示
+                        emit updateLog(QString("平均电流: %1 mA").arg(avgCurrent/1000.0, 0, 'f', 3));
+                        emit updateLog(QString("电源电压: %1 V").arg(voltage, 0, 'f', 3));
+                        emit updateLog(QString("功耗: %1 mW").arg(power * 1000, 0, 'f', 3));
+                    
+                        emit updateProgress(row, 100); // 设置进度为100%
+                    } else {
+                        emit updateLog("未收集到有效样本");
+                        emit updateProgress(row, 0); // 失败时重置进度
+                    }
+                } else {
+                    emit updateLog("未读取到数据");
+                    emit updateProgress(row, 0); // 失败时重置进度
+                }
+            } else {
+                emit updateLog("BLU设备未连接");
+                emit updateProgress(row, 0); // 失败时重置进度
+            }
             
+            // 停止测量
+            if (m_bluSerial) {
+                m_bluSerial->stopMeasurement();
+            }
+            emit updateLog("已完成行 " + QString::number(row) + ": 测量电流");
+          
+        }
+        else if (rowId == "S0") {
+            emit updateProgress(row, 20);
+            QMetaObject::invokeMethod(QApplication::instance(), [this, row, testName, contentEdit, resultCombo]() {
+                QString message = "进入手动模式，按回车键进入手动模式";
+                QMessageBox msgBox;
+                msgBox.setWindowTitle("测试确认");
+                msgBox.setText(message);
+                QPushButton *passButton = msgBox.addButton("进入手动模式(Pass)", QMessageBox::AcceptRole);
+                QPushButton *failButton = msgBox.addButton("退出手动模式(Fail)", QMessageBox::RejectRole);
+                msgBox.exec();
+                if (msgBox.clickedButton() == passButton) {
+                    contentEdit->setText("进入手动模式");
+                    resultCombo->setCurrentIndex(0); // 设置为正常
+                    emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
+                } else if (msgBox.clickedButton() == failButton) {
+                    contentEdit->setText("退出手动模式");
+                    resultCombo->setCurrentIndex(1); // 设置为异常
+                    emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
+                }
+                emit updateProgress(row, 100);
+            }, Qt::BlockingQueuedConnection); 
+
+            emit updateProgress(row, 20);
+        }
+            
+        else if (rowId == "S1") {
+            emit updateProgress(row, 20);
+            bool shellSuccess = false;
+            QString command = "test_backlight_cmd set 20";
+            QString output = m_adbController.executeShellCommand(command, &shellSuccess);
+            emit updateLog("命令输出: \n" + output);
+            if (output.contains("Return: 0")) {
+                contentEdit->setText("背光设置成功");
+            } else {
+                contentEdit->setText("背光设置失败");
+            }
+            QMetaObject::invokeMethod(QApplication::instance(), [this, row, testName, contentEdit, resultCombo]() {
+                QString message = "请确认测试项: " + testName  + "背光是否有变化";
+                QMessageBox msgBox;
+                msgBox.setWindowTitle("测试确认");
+                msgBox.setText(message);
+              
+                QPushButton *passButton = msgBox.addButton("通过(Pass)", QMessageBox::AcceptRole);
+                QPushButton *failButton = msgBox.addButton("失败(Fail)", QMessageBox::RejectRole);
+                msgBox.exec(); 
+                if (msgBox.clickedButton() == passButton) {
+                    resultCombo->setCurrentIndex(0);
+                    emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
+                } else if (msgBox.clickedButton() == failButton) {
+                    resultCombo->setCurrentIndex(1);
+                    emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
+                }
+                emit updateProgress(row, 100);
+            }, Qt::BlockingQueuedConnection); 
+        }
+        else if (rowId == "S2") {
+            emit updateProgress(row, 20);
+            bool shellSuccess = false;
+            QString command = "test_backlight_cmd set 50";
+            QString output = m_adbController.executeShellCommand(command, &shellSuccess);
+            emit updateLog("命令输出: \n" + output);
+            if (output.contains("Return: 0")) {
+                contentEdit->setText("背光设置成功");
+            } else {
+                contentEdit->setText("背光设置失败");
+            }
+            QMetaObject::invokeMethod(QApplication::instance(), [this, row, testName, contentEdit, resultCombo]() {
+                QString message = "请确认测试项: " + testName  + "背光是否有变化";
+                QMessageBox msgBox;
+                msgBox.setWindowTitle("测试确认");
+                msgBox.setText(message);
+              
+                QPushButton *passButton = msgBox.addButton("通过(Pass)", QMessageBox::AcceptRole);
+                QPushButton *failButton = msgBox.addButton("失败(Fail)", QMessageBox::RejectRole);
+                msgBox.exec(); 
+                if (msgBox.clickedButton() == passButton) {
+                    resultCombo->setCurrentIndex(0);
+                    emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
+                } else if (msgBox.clickedButton() == failButton) {
+                    resultCombo->setCurrentIndex(1);
+                    emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
+                }
+                emit updateProgress(row, 100);
+            }, Qt::BlockingQueuedConnection); 
+            
+        }
+        else if (rowId == "S3") {
+            emit updateProgress(row, 20);
+            bool shellSuccess = false;
+            QString command = "test_backlight_cmd set 100";
+            QString output = m_adbController.executeShellCommand(command, &shellSuccess);
+            emit updateLog("命令输出: \n" + output);
+            if (output.contains("Return: 0")) {
+                contentEdit->setText("背光设置成功");
+            } else {
+                contentEdit->setText("背光设置失败");
+            }
+            QMetaObject::invokeMethod(QApplication::instance(), [this, row, testName, contentEdit, resultCombo]() {
+                QString message = "请确认测试项: " + testName  + "背光是否有变化";
+                QMessageBox msgBox;
+                msgBox.setWindowTitle("测试确认");
+                msgBox.setText(message);
+              
+                QPushButton *passButton = msgBox.addButton("通过(Pass)", QMessageBox::AcceptRole);
+                QPushButton *failButton = msgBox.addButton("失败(Fail)", QMessageBox::RejectRole);
+                msgBox.exec(); 
+                if (msgBox.clickedButton() == passButton) {
+                    resultCombo->setCurrentIndex(0);
+                    emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
+                } else if (msgBox.clickedButton() == failButton) {
+                    resultCombo->setCurrentIndex(1);
+                    emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
+                }
+                emit updateProgress(row, 100);
+            }, Qt::BlockingQueuedConnection); 
+            
+        }
+        else if (rowId == "S4") {
+            
+        }
+        else if (rowId == "S5") {
+            
+        }
+        else {
+            emit updateProgress(row, 20); // 先将进度设为20%
             // // 需要在主线程中显示对话框
             // QMetaObject::invokeMethod(QApplication::instance(), [this, row, testName]() {
             //     QString message = "请确认测试项: " + testName;
@@ -301,7 +520,6 @@ void TestThread::run()
         }
         QThread::msleep(500);
     }
-    
     emit updateLog("所有测试已完成");
 }
 
@@ -360,4 +578,3 @@ bool TestThread::runCskBurn(const QString &comPort, int baudRate, const QString 
     
     return success;
 }
-

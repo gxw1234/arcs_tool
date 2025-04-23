@@ -226,8 +226,6 @@ QString ADBController::executeShellCommand(const QString &command, bool *success
     
     QProcess process;
     process.setProcessChannelMode(QProcess::MergedChannels); // 合并标准输出和标准错误
-    
-    // 构建参数
     QStringList arguments;
     arguments << "shell" << command;
     

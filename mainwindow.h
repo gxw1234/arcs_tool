@@ -19,6 +19,8 @@
 #include "testthread.h"
 #include "blu_serial.h"
 #include "blu_protocol.h"
+#include <QSerialPort>
+
 
 class MainWindow : public QMainWindow
 {
@@ -43,11 +45,13 @@ private slots:
     void start_test_content_12();
     void start_test_content();
     void resetTable();
-    
+    void onTestBootTime(int row, bool on, int voltage = 3500); // 处理上电/断电事件与时间测量，添加电压参数
+
 private:
     void setupUi();
     void setupUi_();
     void initSmartPowerDevice();
+    QSerialPort *serialPort;
     
 private:
 
@@ -92,6 +96,11 @@ private:
     
     // 关闭测试会话
     void closeTestSession();
+    
+    // 上电时间记录
+    QDateTime powerOnTime;
+    QDateTime firstResponseTime;
+    bool hasReceivedFirstResponse;
 };
 
 #endif // MAINWINDOW_H

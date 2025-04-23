@@ -1,0 +1,142 @@
+{
+    "columns": ["ID", "测试项目", "测试模式", "测试内容", "进度", "结果", "备注"],
+    "columnWidths": [80, 300, 100, 650, 150, 150, 350],
+    "rows": [
+        {
+            "id": "A1",
+            "name": "烧录ap",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "A2",
+            "name": "烧录cp",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "A3",
+            "name": "烧录资源",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "B1",
+            "name": "检测adb设备",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "B2",
+            "name": "adb_push_pull",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "B3",
+            "name": "adb_push_pull",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "C1",
+            "name": "供电3.5V开发板上电时间",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "D",
+            "name": "adb_push_pull",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "E",
+            "name": "自播自录MIC检测",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "F",
+            "name": "EMMC检测",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "G",
+            "name": "背光检测",
+            "mode": "手动",
+            "content": "手动调节背光检测背光变化",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "H",
+            "name": "OCR检测",
+            "mode": "手动",
+            "content": "请扫描，观察灯光，OCR，TTS 翻译",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "I",
+            "name": "效准触摸",
+            "mode": "手动",
+            "content": "进入效准，请效准",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "J",
+            "name": "未连接wifi功耗",
+            "mode": "手动",
+            "content": "查看静态功耗 标准在208MA左右 正负5MA,比208小也算正常",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "K",
+            "name": "扫描功耗",
+            "mode": "手动",
+            "content": "扫描时的功耗",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "L",
+            "name": "息屏的功耗",
+            "mode": "手动",
+            "content": "查看息屏功耗 80 正负10",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "M",
+            "name": "连接wifi功耗",
+            "mode": "手动",
+            "content": "查看连接wifi功耗 功耗105 正负10 ，有心跳包",
+            "progress": "",
+            "note": ""
+        }
+    ]
+}

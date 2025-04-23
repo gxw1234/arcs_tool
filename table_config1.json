@@ -1,0 +1,39 @@
+{
+    "columns": ["ID", "测试项目", "测试模式", "测试内容", "进度", "结果", "备注"],
+    "columnWidths": [80, 300, 100, 650, 150, 150, 350],
+    "rows": [
+        {
+            "id": "D1",
+            "name": "供电3.5V开发板上电时间",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "D2",
+            "name": "供电4V开发板上电时间",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "D3",
+            "name": "供电4.5V开发板上电时间",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "D4",
+            "name": "供电5V开发板上电时间",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        }
+ 
+    ]
+}
