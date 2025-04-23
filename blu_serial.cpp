@@ -93,20 +93,20 @@ QByteArray BLUSerial::readData(int maxSize)
     
     // 等待数据可用
     if (!m_serialPort->waitForReadyRead(100)) {
-        // 超时不一定是错误，可能只是没有数据
+        
         if (m_serialPort->error() != QSerialPort::NoError && 
             m_serialPort->error() != QSerialPort::TimeoutError) {
             qDebug() << "读取等待错误:" << m_serialPort->errorString();
         }
     }
     
-    // 读取所有可用数据
+
     QByteArray data;
     if (maxSize <= 0) {
-        // 读取所有可用数据
+        
         data = m_serialPort->readAll();
     } else {
-        // 限制读取最大字节数
+        
         data = m_serialPort->read(maxSize);
     }
     
@@ -125,7 +125,6 @@ bool BLUSerial::sendCommand(const QByteArray &command)
         qDebug() << "串口未连接，无法发送命令";
         return false;
     }
-    
     return writeSerial(command);
 }
 
@@ -142,10 +141,8 @@ bool BLUSerial::setVoltage(int voltage_mV)
         qDebug() << "协议对象为空，无法设置电压";
         return false;
     }
-    
     // 设置协议对象中的当前电压值
     m_protocol->setCurrentVdd(voltage_mV);
-    
     // 生成和发送设置电压命令
     QByteArray voltBytes = m_protocol->convertSourceVoltage(voltage_mV);
     QByteArray command;
@@ -161,7 +158,6 @@ bool BLUSerial::toggleDUTPower(bool turnOn)
         qDebug() << "协议对象为空，无法切换电源";
         return false;
     }
-    
     QByteArray command = m_protocol->generateToggleDUTPowerCommand(turnOn);
     return sendCommand(command);
 }
@@ -173,6 +169,7 @@ bool BLUSerial::startMeasurement()
         qDebug() << "协议对象为空，无法开始测量";
         return false;
     }
+    m_serialPort->clear();
     
     QByteArray command = m_protocol->generateStartMeasurementCommand();
     return sendCommand(command);
