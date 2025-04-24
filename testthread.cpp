@@ -167,7 +167,6 @@ void TestThread::run()
                 resultCombo->setCurrentIndex(1);
                 contentEdit->setText("ADB push/pull测试成功，MD5匹配" + md5Original);
             }
-            // 测试完成后删除test_pull.bin文件
             QFile::remove(localPullFile);
             emit updateLog("已删除测试文件: " + localPullFile);
             emit updateProgress(row, 100);
@@ -203,19 +202,15 @@ void TestThread::run()
                 if (!data.isEmpty()) {
                     QByteArray remainder; // 创建一个临时变量传递给processSamples
                     QVector<double> samples = m_bluSerial->getProtocol()->processSamples(data, remainder);
-                    // 显示样本数量和平均值
                     if (!samples.isEmpty()) {
                         double avgCurrent = 0.0;
                         for (double sample : samples) {
                             avgCurrent += sample;
                         }
                         avgCurrent /= samples.size();
-                        
-                        // 计算功率 P = U * I
+
                         double voltage = m_bluSerial->getProtocol()->currentVdd() / 1000.0; // 源电压（V）
                         double power = voltage * avgCurrent / 1000000.0; // 功率（W）
-                        
-                        // 统一使用mA单位显示
                         emit updateLog(QString("平均电流: %1 mA").arg(avgCurrent/1000.0, 0, 'f', 3));
                         emit updateLog(QString("电源电压: %1 V").arg(voltage, 0, 'f', 3));
                         emit updateLog(QString("功耗: %1 mW").arg(power * 1000, 0, 'f', 3));
@@ -250,8 +245,6 @@ void TestThread::run()
                 emit updateLog("已设置源电压为3.5V");
             }
             emit updateProgress(row, 40);
-
-            // 关闭DUT电源
             if (!m_bluSerial->toggleDUTPower(false)) {
                 emit updateLog("关闭DUT电源失败");
 
@@ -260,8 +253,6 @@ void TestThread::run()
             }
             emit updateProgress(row, 60);
             QThread::msleep(500);
-
-            // 打开DUT电源
             if (!m_bluSerial->toggleDUTPower(true)) {
                 emit updateLog("打开DUT电源失败");
                
@@ -522,7 +513,7 @@ void TestThread::run()
             if (m_bluSerial) {
                 m_bluSerial->stopMeasurement();
             }
-            emit updateProgress(row, 100); // 设置进度为100%
+            emit updateProgress(row, 100); 
             emit updateLog("已完成行 " + QString::number(row) + ": 测量电流");
           
         }
@@ -598,7 +589,7 @@ void TestThread::run()
             } else {
                 emit updateLog("BLU设备未连接");
                 contentEdit->setText("BLU设备未连接");
-                resultCombo->setCurrentIndex(2); // 设置为异常
+                resultCombo->setCurrentIndex(2);
             }
             if (m_bluSerial) {
                 m_bluSerial->stopMeasurement();
@@ -607,7 +598,7 @@ void TestThread::run()
             m_adbController.executeShellCommand("test_reboot_cmd", &shellSuccess);
             QThread::msleep(2000);
 
-            emit updateProgress(row, 100); // 设置进度为100%
+            emit updateProgress(row, 100); 
             emit updateLog("已完成行 " + QString::number(row) + ": 测量电流");
 
             
@@ -678,7 +669,7 @@ void TestThread::run()
             } else {
                 emit updateLog("BLU设备未连接");
                 contentEdit->setText("BLU设备未连接");
-                resultCombo->setCurrentIndex(2); // 设置为异常
+                resultCombo->setCurrentIndex(2); 
             }
             if (m_bluSerial) {
                 m_bluSerial->stopMeasurement();
@@ -688,7 +679,7 @@ void TestThread::run()
             QThread::msleep(2000);
 
 
-            emit updateProgress(row, 100); // 设置进度为100%
+            emit updateProgress(row, 100); 
             emit updateLog("已完成行 " + QString::number(row) + ": 测量电流");
         }
         else if (rowId == "F1")
@@ -730,8 +721,6 @@ void TestThread::run()
             bool shellSuccess = false;
             QString output = m_adbController.executeShellCommand(command, &shellSuccess);
             emit updateLog("命令输出: \n" + output);
-            
-            // 解析WiFi扫描结果，查找"gxw"网络
             bool foundGxwNetwork = false;
             int rssiValue = 0;
             

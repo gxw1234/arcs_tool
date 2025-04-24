@@ -115,6 +115,7 @@ private:
     QString serialReceivedData;
     QString Title_test = "test_tool 1.1";
     QString deviceId_;
+    bool allowEnterToStartTest; // 控制回车键是否触发测试
 };
 
 #endif // MAINWINDOW_H

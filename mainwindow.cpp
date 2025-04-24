@@ -21,9 +21,9 @@
 #include <QHeaderView>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), statusTimer(nullptr), powerController(nullptr), test_thread(nullptr), serialPort(nullptr)
+    : QMainWindow(parent), statusTimer(nullptr), powerController(nullptr), test_thread(nullptr), serialPort(nullptr), allowEnterToStartTest(true)
 {
-    // 安装事件过滤器，捕获整个应用程序的回车键
+
     qApp->installEventFilter(this);
     
 
@@ -31,19 +31,15 @@ MainWindow::MainWindow(QWidget *parent)
     powerController = SmartPowerController::getInstance();
     setupUi_();
     
-    // 读取配置文件
+
     QSettings settings("cfg.ini", QSettings::IniFormat);
-    
-    // 直接读取串口信息
     burnComPort = settings.value("Serial/BurnCOM").toString();
     bluComPort = settings.value("BLU/DeviceCOM").toString();
     snopne = settings.value("SN/open").toString();
-    bluVoltageValue = 4000; // 使用固定的默认值
+    bluVoltageValue = 4000;
     
-    // 初始化协议实例
+
     bluProtocol = new BLUProtocol(this);
-    
-    // 初始化串口通信实例
     bluSerial = new BLUSerial(bluProtocol, this);
 
 
@@ -56,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    // 释放BLU相关资源
+
     if (bluSerial) {
         bluSerial->closePort();
     }
@@ -65,11 +61,9 @@ MainWindow::~MainWindow()
 void MainWindow::setupUi_()
 {
     setWindowTitle(Title_test);
-    // 创建中心部件和主布局
     centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
-    // 从JSON文件加载表格配置
     QFile configFile("./table_config.json");
     if (!configFile.open(QIODevice::ReadOnly)) {
         qWarning("无法打开表格配置文件!");
@@ -103,26 +97,23 @@ void MainWindow::setupUi_()
         table_widget->setColumnWidth(i, columnWidthsArray[i].toInt());
     }
 
-    // 设置最后一列自适应宽度
+  
     table_widget->horizontalHeader()->setStretchLastSection(true);
 
-    // 隐藏第一列（ID列）
+   
     table_widget->hideColumn(0);
     for (int row = 0; row < rowsArray.size(); row++) {
         QJsonObject rowObj = rowsArray[row].toObject();
-        // 添加ID列，但隐藏显示
+       
         QTableWidgetItem *idItem = new QTableWidgetItem(rowObj["id"].toString());
         idItem->setTextAlignment(Qt::AlignCenter);
         table_widget->setItem(row, 0, idItem);
 
         QTableWidgetItem *nameItem = new QTableWidgetItem(QString(" %1").arg(rowObj["name"].toString()));
         table_widget->setItem(row, 1, nameItem);
-        
-        // 测试模式列
+
         QString modeText = rowObj["mode"].toString();
         QLineEdit *modeEdit = new QLineEdit(QString(" %1").arg(modeText));
-        
-        // 根据模式设置样式：自动为绿色，手动为蓝色
         if (modeText == "自动") {
             modeEdit->setStyleSheet("background-color: lightgreen;");
         } else if (modeText == "手动") {
@@ -133,38 +124,32 @@ void MainWindow::setupUi_()
         
         
         table_widget->setCellWidget(row, 2, modeEdit);
-        
-        // 测试内容列
+
         QLineEdit *contentEdit = new QLineEdit(rowObj["content"].toString());
         table_widget->setCellWidget(row, 3, contentEdit);
         
-        // 进度列 - 使用进度条
+
         QProgressBar *progressBar = new QProgressBar();
         progressBar->setRange(0, 100);
         progressBar->setValue(0);
         progressBar->setTextVisible(true); // 显示进度百分比
         progressBar->setAlignment(Qt::AlignCenter);
         progressBar->setFormat("%p%");
-        // 设置样式表，使用灰色背景而不是默认的绿色
+
         progressBar->setStyleSheet("QProgressBar {background-color: #e0e0e0; border: 1px solid #c0c0c0; border-radius: 2px; padding: 1px;} "
                                   "QProgressBar::chunk {background-color: #c0c0c0; width: 1px;}");
         table_widget->setCellWidget(row, 4, progressBar);
         
-        // 结果列 - 使用固定的下拉菜单
+
         QComboBox *resultCombo = new QComboBox();
         QStringList items;
         items <<"未测试"<< "正常" << "异常";
         resultCombo->addItems(items);
         resultCombo->setCurrentIndex(0); // 默认选择未测试
-        
-        // 为不同选项设置不同颜色
         resultCombo->setItemData(0, QBrush(QColor("blue")), Qt::ForegroundRole);
         resultCombo->setItemData(1, QBrush(QColor("green")), Qt::ForegroundRole);
         resultCombo->setItemData(2, QBrush(QColor("red")), Qt::ForegroundRole);
-        
-        // 添加currentIndexChanged事件处理，以更新当前显示项的文本颜色
         connect(resultCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), [resultCombo](int index) {
-            // 获取当前选择项的颜色
             QColor color;
             switch(index) {
                 case 0: color = QColor("blue"); break;
@@ -173,11 +158,9 @@ void MainWindow::setupUi_()
                 default: color = QColor("black"); break;
             }
             
-            // 设置ComboBox的样式表，更新显示颜色
             resultCombo->setStyleSheet(QString("QComboBox { color: %1; }").arg(color.name()));
         });
         
-        // 初始化颜色
         resultCombo->setStyleSheet("QComboBox { color: blue; }"); // 默认"未测试"项为蓝色
         
         table_widget->setCellWidget(row, 5, resultCombo);
@@ -440,13 +423,16 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
         
         // 如果按下回车键或回车键
         if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
-            // 且开始测试按钮存在且可用且没有测试线程运行
-            if (start_test && start_test->isEnabled() && (!test_thread || !test_thread->isRunning())) {
-                // 立即聚焦并点击开始测试按钮
-                start_test->setFocus();
-                start_test->click();
-                qDebug() << "回车键触发了开始测试";
-                return true; // 阻止事件继续传递
+            // 检查是否允许回车键触发测试
+            if (allowEnterToStartTest) {
+                // 且开始测试按钮存在且可用且没有测试线程运行
+                if (start_test && start_test->isEnabled() && (!test_thread || !test_thread->isRunning())) {
+                    // 立即聚焦并点击开始测试按钮
+                    start_test->setFocus();
+                    start_test->click();
+                    qDebug() << "回车键触发了开始测试";
+                    return true; // 阻止事件继续传递
+                }
             }
         }
     } 
@@ -454,7 +440,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
     else if (event->type() == QEvent::ShortcutOverride) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
         if ((keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) && 
-            start_test && start_test->isEnabled()) {
+            allowEnterToStartTest && start_test && start_test->isEnabled()) {
             // 只标记事件已处理，但不触发点击
             event->accept();
             return true;
@@ -665,47 +651,52 @@ void MainWindow::resetTable()
     
     // 更新表格内容
     for (int row = 0; row < qMin(rowsArray.size(), table_widget->rowCount()); row++) {
-        QJsonObject rowObj = rowsArray[row].toObject();
-        
-        // 测试模式列
-        QString modeText = rowObj["mode"].toString();
-        QLineEdit *modeEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 2));
-        if (modeEdit) {
-            modeEdit->setText(QString(" %1").arg(modeText));
-        }
-        
-        // 测试内容列
-        QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
-        if (contentEdit) {
-            contentEdit->setText(rowObj["content"].toString());
-        }
-        
-        // 进度列 - 重置进度条为0
-        QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 4));
-        if (progressBar) {
-            progressBar->setValue(0);
-        }
-        
-        // 结果列 - 重置为异常
-        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
-        if (resultCombo) {
-            resultCombo->setCurrentIndex(0); // 默认固定为异常
-        }
-        
-        // 备注列
-        QLineEdit *noteEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 6));
-        if (noteEdit) {
-            noteEdit->setText(rowObj["note"].toString());
-        }
-        
-        // 移除所有行的高亮样式
-        for (int col = 0; col < table_widget->columnCount(); col++) {
-            QTableWidgetItem *item = table_widget->item(row, col);
-            if (item) {
-                item->setBackground(Qt::transparent);
+
+        if(row != 0){
+            QJsonObject rowObj = rowsArray[row].toObject();
+            
+            // 测试模式列
+            QString modeText = rowObj["mode"].toString();
+            QLineEdit *modeEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 2));
+            if (modeEdit) {
+                modeEdit->setText(QString(" %1").arg(modeText));
+            }
+            
+            // 测试内容列
+            QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
+            if (contentEdit) {
+                contentEdit->setText(rowObj["content"].toString());
+            }
+            
+            // 进度列 - 重置进度条为0
+            QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 4));
+            if (progressBar) {
+                progressBar->setValue(0);
+            }
+            
+            // 结果列 - 重置为异常
+            QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
+            if (resultCombo) {
+                resultCombo->setCurrentIndex(0); // 默认固定为异常
+            }
+            
+            // 备注列
+            QLineEdit *noteEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 6));
+            if (noteEdit) {
+                noteEdit->setText(rowObj["note"].toString());
+            }
+            
+            // 移除所有行的高亮样式
+            for (int col = 0; col < table_widget->columnCount(); col++) {
+                QTableWidgetItem *item = table_widget->item(row, col);
+                if (item) {
+                    item->setBackground(Qt::transparent);
+                }
+
             }
         }
     }
+    
 }
 
 void MainWindow::updatedeviceId(const QString &deviceId)
@@ -876,34 +867,68 @@ void MainWindow::start_test_content_12()
 }
 void MainWindow::showSNInputDialog()
 {
-    bool ok;
-    deviceSN = QInputDialog::getText(this, 
-                                    "扫描SN", 
-                                    "请扫描设备序列号(SN):", 
-                                    QLineEdit::Normal,
-                                    "", 
-                                    &ok);
+    allowEnterToStartTest = false;
     
-    if (ok && !deviceSN.isEmpty()) {
-        if (deviceSN.startsWith("LS"))
-        {
-            QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(0, 3));
-            if (contentEdit) {
-                contentEdit->setText("SN : " + deviceSN);
-            }
+    bool ok;
+    QString text;
+    
+    do {
+        text = QInputDialog::getText(this, tr("扫描SN"),
+                                     tr("请输入设备SN:"), QLineEdit::Normal,
+                                     "", &ok);
+        
+        if (!ok) {
+            allowEnterToStartTest = true;
+            return;
         }
-        else
-        {
-            showSNInputDialog();
+        
+    } while (!text.startsWith("LS") && text != "123");
+    
+    deviceSN = text;
+    
+    this->setWindowTitle(QString("测试工具 - SN: %1").arg(deviceSN));
+    
+    QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(0, 5));
+    if (resultCombo) {
+        QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(0, 3));
+        if (contentEdit) {
+            contentEdit->setText(deviceSN);
         }
     }
     
+    QMessageBox confirmBox;
+    confirmBox.setWindowTitle("===确认测试====");
+    confirmBox.setText(QString("SN已输入: %1\n准备开始测试?").arg(deviceSN));
+    confirmBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+    confirmBox.setDefaultButton(QMessageBox::Ok);
+    
+    confirmBox.setButtonText(QMessageBox::Ok, "开始测试");
+    confirmBox.setButtonText(QMessageBox::Cancel, "取消测试");
+    
+    int ret = confirmBox.exec();
+    
+    allowEnterToStartTest = true;
+    
+    if (ret == QMessageBox::Ok) {
+        QTimer::singleShot(100, this, [this]() {
+            start_test_content();
+        });
+    } else {
+        QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(0, 3));
+        if (contentEdit) {
+            contentEdit->setText("");
+        }
+        
+        QTimer::singleShot(100, this, [this]() {
+            showSNInputDialog();
+        });
+    }
 }
 
-// 保存测试日志到文件
+
 void MainWindow::saveTestLog()
 {
-    // 创建logs目录（如果不存在）
+
     QDir logsDir("./logs/test_log");
     if (!logsDir.exists()) {
         logsDir.mkpath(".");
@@ -919,7 +944,7 @@ void MainWindow::saveTestLog()
     if (logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         QTextStream stream(&logFile);
         stream.setCodec("UTF-8");
-        stream.setGenerateByteOrderMark(true); // 写入UTF-8 BOM头标记
+        stream.setGenerateByteOrderMark(true); 
 
         stream << "Test Time: " << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss") << "\n";
         stream << "Device SN: " << (deviceSN.isEmpty() ? "Not specified" : deviceSN) << "\n";
