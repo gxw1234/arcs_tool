@@ -47,6 +47,7 @@ private slots:
     void resetTable();
     void onTestBootTime(int row, bool on, int voltage = 3500); 
     void onTestSoftReset(int row, bool on); // 处理软复位结果
+    void updatedeviceId(const QString &deviceId); // 处理设备ID
     void showSNInputDialog(); // 显示SN扫描对话框
 
 private:
@@ -92,7 +93,6 @@ private:
     BLUProtocol *bluProtocol;
     QString bluComPort;
     QString snopne;
-    QString sntest;
     int bluVoltageValue;
     
     // 配置文件读取的串口信息

@@ -70,10 +70,10 @@ void MainWindow::setupUi_()
     setCentralWidget(centralWidget);
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
     // 从JSON文件加载表格配置
-    QFile configFile("d:/py/qtqbj/table_config.json");
+    QFile configFile("./table_config.json");
     if (!configFile.open(QIODevice::ReadOnly)) {
         qWarning("无法打开表格配置文件!");
-        show_log->append("错误: 无法打开配置文件 d:/py/qtqbj/table_config.json");
+        show_log->append("错误: 无法打开配置文件 ./table_config.json");
         return;
     }
     QByteArray configData = configFile.readAll();
@@ -153,9 +153,33 @@ void MainWindow::setupUi_()
         // 结果列 - 使用固定的下拉菜单
         QComboBox *resultCombo = new QComboBox();
         QStringList items;
-        items << "正常" << "异常";
+        items <<"未测试"<< "正常" << "异常";
         resultCombo->addItems(items);
-        resultCombo->setCurrentIndex(1); // 默认选择异常
+        resultCombo->setCurrentIndex(0); // 默认选择未测试
+        
+        // 为不同选项设置不同颜色
+        resultCombo->setItemData(0, QBrush(QColor("blue")), Qt::ForegroundRole);
+        resultCombo->setItemData(1, QBrush(QColor("green")), Qt::ForegroundRole);
+        resultCombo->setItemData(2, QBrush(QColor("red")), Qt::ForegroundRole);
+        
+        // 添加currentIndexChanged事件处理，以更新当前显示项的文本颜色
+        connect(resultCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), [resultCombo](int index) {
+            // 获取当前选择项的颜色
+            QColor color;
+            switch(index) {
+                case 0: color = QColor("blue"); break;
+                case 1: color = QColor("green"); break;
+                case 2: color = QColor("red"); break;
+                default: color = QColor("black"); break;
+            }
+            
+            // 设置ComboBox的样式表，更新显示颜色
+            resultCombo->setStyleSheet(QString("QComboBox { color: %1; }").arg(color.name()));
+        });
+        
+        // 初始化颜色
+        resultCombo->setStyleSheet("QComboBox { color: blue; }"); // 默认"未测试"项为蓝色
+        
         table_widget->setCellWidget(row, 5, resultCombo);
         
         // 备注列
@@ -523,7 +547,7 @@ void MainWindow::start_test_content()
 
 
     connect(test_thread, &TestThread::updateSoftReset, this, &MainWindow::onTestSoftReset);
-
+    connect(test_thread, &TestThread::updatedeviceId, this, &MainWindow::updatedeviceId);
 
     connect(test_thread, &TestThread::updateBootTime, this, &MainWindow::onTestBootTime);
     
@@ -659,7 +683,7 @@ void MainWindow::resetTable()
         // 结果列 - 重置为异常
         QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
         if (resultCombo) {
-            resultCombo->setCurrentIndex(1); // 默认固定为异常
+            resultCombo->setCurrentIndex(0); // 默认固定为异常
         }
         
         // 备注列
@@ -678,17 +702,18 @@ void MainWindow::resetTable()
     }
 }
 
+void MainWindow::updatedeviceId(const QString &deviceId)
+{
+    deviceId_ = deviceId;
+    
+}
 void MainWindow::onTestSoftReset(int row, bool on)
 {
     QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
     QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 4));
     QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
-
     if(on){
-        // 清空之前收集的数据
         serialReceivedData.clear();
-
-       
         if (!serialPort) {
             serialPort = new QSerialPort(this);
         }
@@ -726,11 +751,11 @@ void MainWindow::onTestSoftReset(int row, bool on)
         
         if (serialReceivedData.contains("version", Qt::CaseInsensitive)) {
             contentEdit->setText("软复位成功，检测到版本信息");
-            resultCombo->setCurrentIndex(0); // 设置为正常
+            resultCombo->setCurrentIndex(1); // 设置为正常
             show_log->append("软复位测试通过：检测到版本信息");
         } else {
             contentEdit->setText("软复位失败，未检测到版本信息");
-            resultCombo->setCurrentIndex(1); // 设置为异常
+            resultCombo->setCurrentIndex(2); // 设置为异常
             show_log->append("软复位测试失败：未检测到版本信息");
         }
     }
@@ -820,7 +845,7 @@ void MainWindow::onTestBootTime(int row, bool on, int voltage)
                 progressBar->setValue(100);
             }
             if (resultCombo) {
-                resultCombo->setCurrentIndex(0); // 设置为正常
+                resultCombo->setCurrentIndex(1 ); // 设置为正常
             }
             
             show_log->append(bootTimeStr);
@@ -832,7 +857,7 @@ void MainWindow::onTestBootTime(int row, bool on, int voltage)
                 progressBar->setValue(0);
             }
             if (resultCombo) {
-                resultCombo->setCurrentIndex(1); // 设置为异常
+                resultCombo->setCurrentIndex(2); // 设置为异常
             }
             
             show_log->append("未收到任何响应，无法计算启动耗时");
@@ -870,8 +895,5 @@ void MainWindow::showSNInputDialog()
             showSNInputDialog();
         }
     }
-    else
-    {
-        showSNInputDialog();
-    }
+    
 }

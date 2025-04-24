@@ -54,11 +54,11 @@ void TestThread::run()
             QString output;
             if (runCskBurn(m_burnCOM, 3000000, "0x0", "./fw/ap.bin", output)) {
                 contentEdit->setText("AP固件烧录成功");
-                resultCombo->setCurrentIndex(0);
+                resultCombo->setCurrentIndex(1);
 
             } else {
                 contentEdit->setText("AP固件烧录失败");
-                resultCombo->setCurrentIndex(1);
+                resultCombo->setCurrentIndex(2);
 
             }
             emit updateLog("AP固件烧录日志: " + output);
@@ -71,11 +71,11 @@ void TestThread::run()
 
             if (runCskBurn(m_burnCOM, 3000000, "0xD00000", "./fw/cp.bin", output)) {
                 contentEdit->setText("CP固件烧录成功");
-                resultCombo->setCurrentIndex(0);
+                resultCombo->setCurrentIndex(1);
                 emit updateLog("烧录成功: " + output);
             } else {
                 contentEdit->setText("CP固件烧录失败");
-                resultCombo->setCurrentIndex(1);
+                resultCombo->setCurrentIndex(2);
                 emit updateLog("烧录失败: " + output);
             }
             emit updateLog("CP固件烧录日志: " + output);
@@ -86,11 +86,11 @@ void TestThread::run()
             QString output;
             if (runCskBurn(m_burnCOM, 3000000, "0x200000", "./fw/respak.bin", output)) {
                 contentEdit->setText("REPAK固件烧录成功");
-                resultCombo->setCurrentIndex(0);    
+                resultCombo->setCurrentIndex(1);    
                 emit updateLog("烧录成功: " + output);
             } else {
                 contentEdit->setText("REPAK固件烧录失败");
-                resultCombo->setCurrentIndex(1);
+                resultCombo->setCurrentIndex(2);
                 emit updateLog("烧录失败: " + output);
             }
             emit updateLog("REPAK固件烧录日志: " + output);
@@ -110,12 +110,13 @@ void TestThread::run()
                     deviceInfo += "- " + device + "\n";
                 }
                 emit updateLog("检测到ADB设备: " + deviceInfo);
+                emit updatedeviceId(deviceId);
                 contentEdit->setText("设备ID：" + deviceId);
-                resultCombo->setCurrentIndex(0);  
+                resultCombo->setCurrentIndex(1);  
             } else {
                 emit updateLog("未检测到ADB设备");
                 contentEdit->setText("未发现ADB设备");
-                resultCombo->setCurrentIndex(1);  
+                resultCombo->setCurrentIndex(2);  
             }
             emit updateProgress(row, 100);
         }
@@ -148,7 +149,7 @@ void TestThread::run()
             QFile pulledFile(localPullFile);
             if (!pulledFile.exists()) {
                 contentEdit->setText("文件验证失败");
-                resultCombo->setCurrentIndex(1);  // 异常
+                resultCombo->setCurrentIndex(2);  // 异常
                 emit updateProgress(row, 0);
                
             }
@@ -158,10 +159,10 @@ void TestThread::run()
             emit updateLog("下载MD5: " + md5Downloaded);
             if (md5Original != md5Downloaded) {
                 contentEdit->setText("文件MD5不匹配" + md5Original + " vs " + md5Downloaded);
-                resultCombo->setCurrentIndex(1);  
+                resultCombo->setCurrentIndex(2);  
             }
             else{
-                resultCombo->setCurrentIndex(0);
+                resultCombo->setCurrentIndex(1);
                 contentEdit->setText("ADB push/pull测试成功，MD5匹配" + md5Original);
             }
             // 测试完成后删除test_pull.bin文件
@@ -179,10 +180,10 @@ void TestThread::run()
             emit updateLog("命令输出: \n" + output);
             if (output.contains("Return: 0")) {
                 contentEdit->setText("背光设置成功，已自动终止");
-                resultCombo->setCurrentIndex(0); // 设置为正常
+                resultCombo->setCurrentIndex(1); // 设置为正常
             } else {
                 contentEdit->setText("背光设置失败");
-                resultCombo->setCurrentIndex(1); // 设置为异常
+                resultCombo->setCurrentIndex(2); // 设置为异常
             }
             emit updateProgress(row, 100);
         }
@@ -285,11 +286,11 @@ void TestThread::run()
                 }
                 emit updateLog("检测到ADB设备: " + deviceInfo);
                 contentEdit->setText("设备ID：" + deviceId);
-                resultCombo->setCurrentIndex(0);  
+                resultCombo->setCurrentIndex(1);  
             } else {
                 emit updateLog("未检测到ADB设备");
                 contentEdit->setText("未发现ADB设备");
-                resultCombo->setCurrentIndex(1);  
+                resultCombo->setCurrentIndex(2);  
             }
             emit updateProgress(row, 100);
         }
@@ -330,49 +331,49 @@ void TestThread::run()
             QThread::msleep(2000);
             emit updateProgress(row, 40);
             if (m_bluSerial && m_bluSerial->isConnected()) {
-                QByteArray data = m_bluSerial->readData(0); // 限制最多15000字节
+                QByteArray data = m_bluSerial->readData(0); 
                 emit updateLog(QString("读取到原始数据: %1 字节").arg(data.size()));
                 if (!data.isEmpty()) {
-                    QByteArray remainder; // 创建一个临时变量传递给processSamples
+                    QByteArray remainder; 
                     QVector<double> samples = m_bluSerial->getProtocol()->processSamples(data, remainder);
-                    // 显示样本数量和平均值
+                  
                     if (!samples.isEmpty()) {
                         double avgCurrent = 0.0;
                         for (double sample : samples) {
                             avgCurrent += sample;
                         }
                         avgCurrent /= samples.size();
-                        // 计算功率 P = U * I
+                        
                         double voltage = m_bluSerial->getProtocol()->currentVdd() / 1000.0; // 源电压（V）
-                        double power = voltage * avgCurrent / 1000000.0; // 功率（W）
+                        double power = voltage * avgCurrent / 1000000.0; 
                         emit updateLog(QString("平均电流: %1 mA").arg(avgCurrent/1000.0, 0, 'f', 3));
                         emit updateLog(QString("电源电压: %1 V").arg(voltage, 0, 'f', 3));
                         emit updateLog(QString("功耗: %1 mW").arg(power * 1000, 0, 'f', 3));
                         
-                        double currentInMA = avgCurrent/1000.0; // 转换为mA单位
-                        if (currentInMA < 180) {
+                        double currentInMA = avgCurrent/1000.0; 
+                        if (currentInMA < 250) {
                             contentEdit->setText(QString("平均电流: %1 mA (正常)").arg(currentInMA, 0, 'f', 3));
-                            resultCombo->setCurrentIndex(0); // 设置为正常
+                            resultCombo->setCurrentIndex(1); 
                             emit updateLog("电流测试通过: 平均电流小于180mA");
                         } else {
                             contentEdit->setText(QString("平均电流: %1 mA (超出阈值)").arg(currentInMA, 0, 'f', 3));
-                            resultCombo->setCurrentIndex(1); // 设置为异常
+                            resultCombo->setCurrentIndex(2); // 设置为异常
                             emit updateLog("电流测试失败: 平均电流超过180mA");
                         }
                     } else {
                         emit updateLog("未收集到有效样本");
                         contentEdit->setText("未收集到有效样本");
-                        resultCombo->setCurrentIndex(1); // 设置为异常
+                        resultCombo->setCurrentIndex(2); // 设置为异常
                     }
                 } else {
                     emit updateLog("未读取到数据");
                     contentEdit->setText("未读取到数据");
-                    resultCombo->setCurrentIndex(1); // 设置为异常
+                    resultCombo->setCurrentIndex(2); // 设置为异常
                 }
             } else {
                 emit updateLog("BLU设备未连接");
                 contentEdit->setText("BLU设备未连接");
-                resultCombo->setCurrentIndex(1); // 设置为异常
+                resultCombo->setCurrentIndex(2); // 设置为异常
             }
             
             
@@ -400,49 +401,49 @@ void TestThread::run()
             QThread::msleep(2000);
             emit updateProgress(row, 40);
             if (m_bluSerial && m_bluSerial->isConnected()) {
-                QByteArray data = m_bluSerial->readData(0); // 限制最多15000字节
+                QByteArray data = m_bluSerial->readData(0); 
                 emit updateLog(QString("读取到原始数据: %1 字节").arg(data.size()));
                 if (!data.isEmpty()) {
-                    QByteArray remainder; // 创建一个临时变量传递给processSamples
+                    QByteArray remainder; 
                     QVector<double> samples = m_bluSerial->getProtocol()->processSamples(data, remainder);
-                    // 显示样本数量和平均值
+                   
                     if (!samples.isEmpty()) {
                         double avgCurrent = 0.0;
                         for (double sample : samples) {
                             avgCurrent += sample;
                         }
                         avgCurrent /= samples.size();
-                        // 计算功率 P = U * I
+                       
                         double voltage = m_bluSerial->getProtocol()->currentVdd() / 1000.0; // 源电压（V）
                         double power = voltage * avgCurrent / 1000000.0; // 功率（W）
                         emit updateLog(QString("平均电流: %1 mA").arg(avgCurrent/1000.0, 0, 'f', 3));
                         emit updateLog(QString("电源电压: %1 V").arg(voltage, 0, 'f', 3));
                         emit updateLog(QString("功耗: %1 mW").arg(power * 1000, 0, 'f', 3));
                         
-                        double currentInMA = avgCurrent/1000.0; // 转换为mA单位
-                        if (currentInMA < 180) {
+                        double currentInMA = avgCurrent/1000.0; 
+                        if (currentInMA < 250) {
                             contentEdit->setText(QString("平均电流: %1 mA (正常)").arg(currentInMA, 0, 'f', 3));
-                            resultCombo->setCurrentIndex(0); // 设置为正常
+                            resultCombo->setCurrentIndex(1); 
                             emit updateLog("电流测试通过: 平均电流小于180mA");
                         } else {
                             contentEdit->setText(QString("平均电流: %1 mA (超出阈值)").arg(currentInMA, 0, 'f', 3));
-                            resultCombo->setCurrentIndex(1); // 设置为异常
+                            resultCombo->setCurrentIndex(2); 
                             emit updateLog("电流测试失败: 平均电流超过180mA");
                         }
                     } else {
                         emit updateLog("未收集到有效样本");
                         contentEdit->setText("未收集到有效样本");
-                        resultCombo->setCurrentIndex(1); // 设置为异常
+                        resultCombo->setCurrentIndex(2); // 设置为异常
                     }
                 } else {
                     emit updateLog("未读取到数据");
                     contentEdit->setText("未读取到数据");
-                    resultCombo->setCurrentIndex(1); // 设置为异常
+                    resultCombo->setCurrentIndex(2); // 设置为异常
                 }
             } else {
                 emit updateLog("BLU设备未连接");
                 contentEdit->setText("BLU设备未连接");
-                resultCombo->setCurrentIndex(1); // 设置为异常
+                resultCombo->setCurrentIndex(2); // 设置为异常
             }
             
             
@@ -470,49 +471,49 @@ void TestThread::run()
             QThread::msleep(2000);
             emit updateProgress(row, 40);
             if (m_bluSerial && m_bluSerial->isConnected()) {
-                QByteArray data = m_bluSerial->readData(0); // 限制最多15000字节
+                QByteArray data = m_bluSerial->readData(0);
                 emit updateLog(QString("读取到原始数据: %1 字节").arg(data.size()));
                 if (!data.isEmpty()) {
-                    QByteArray remainder; // 创建一个临时变量传递给processSamples
+                    QByteArray remainder; 
                     QVector<double> samples = m_bluSerial->getProtocol()->processSamples(data, remainder);
-                    // 显示样本数量和平均值
+                   
                     if (!samples.isEmpty()) {
                         double avgCurrent = 0.0;
                         for (double sample : samples) {
                             avgCurrent += sample;
                         }
                         avgCurrent /= samples.size();
-                        // 计算功率 P = U * I
-                        double voltage = m_bluSerial->getProtocol()->currentVdd() / 1000.0; // 源电压（V）
-                        double power = voltage * avgCurrent / 1000000.0; // 功率（W）
+                       
+                        double voltage = m_bluSerial->getProtocol()->currentVdd() / 1000.0; 
+                        double power = voltage * avgCurrent / 1000000.0; 
                         emit updateLog(QString("平均电流: %1 mA").arg(avgCurrent/1000.0, 0, 'f', 3));
                         emit updateLog(QString("电源电压: %1 V").arg(voltage, 0, 'f', 3));
                         emit updateLog(QString("功耗: %1 mW").arg(power * 1000, 0, 'f', 3));
                         
-                        double currentInMA = avgCurrent/1000.0; // 转换为mA单位
-                        if (currentInMA < 180) {
+                        double currentInMA = avgCurrent/1000.0; 
+                        if (currentInMA < 240) {
                             contentEdit->setText(QString("平均电流: %1 mA (正常)").arg(currentInMA, 0, 'f', 3));
-                            resultCombo->setCurrentIndex(0); // 设置为正常
+                            resultCombo->setCurrentIndex(1); 
                             emit updateLog("电流测试通过: 平均电流小于180mA");
                         } else {
                             contentEdit->setText(QString("平均电流: %1 mA (超出阈值)").arg(currentInMA, 0, 'f', 3));
-                            resultCombo->setCurrentIndex(1); // 设置为异常
+                            resultCombo->setCurrentIndex(2); // 设置为异常
                             emit updateLog("电流测试失败: 平均电流超过180mA");
                         }
                     } else {
                         emit updateLog("未收集到有效样本");
                         contentEdit->setText("未收集到有效样本");
-                        resultCombo->setCurrentIndex(1); // 设置为异常
+                        resultCombo->setCurrentIndex(2); // 设置为异常
                     }
                 } else {
                     emit updateLog("未读取到数据");
                     contentEdit->setText("未读取到数据");
-                    resultCombo->setCurrentIndex(1); // 设置为异常
+                    resultCombo->setCurrentIndex(2); // 设置为异常
                 }
             } else {
                 emit updateLog("BLU设备未连接");
                 contentEdit->setText("BLU设备未连接");
-                resultCombo->setCurrentIndex(1); // 设置为异常
+                resultCombo->setCurrentIndex(2); // 设置为异常
             }
             
             
@@ -575,27 +576,27 @@ void TestThread::run()
                         double currentInMA = avgCurrent/1000.0; // 转换为mA单位
                         if (currentInMA < 180) {
                             contentEdit->setText(QString("平均电流: %1 mA (正常)").arg(currentInMA, 0, 'f', 3));
-                            resultCombo->setCurrentIndex(0); // 设置为正常
+                            resultCombo->setCurrentIndex(1); // 设置为正常
                             emit updateLog("电流测试通过: 平均电流小于180mA");
                         } else {
                             contentEdit->setText(QString("平均电流: %1 mA (超出阈值)").arg(currentInMA, 0, 'f', 3));
-                            resultCombo->setCurrentIndex(1); // 设置为异常
+                            resultCombo->setCurrentIndex(2); // 设置为异常
                             emit updateLog("电流测试失败: 平均电流超过180mA");
                         }
                     } else {
                         emit updateLog("未收集到有效样本");
                         contentEdit->setText("未收集到有效样本");
-                        resultCombo->setCurrentIndex(1); // 设置为异常
+                        resultCombo->setCurrentIndex(2); // 设置为异常
                     }
                 } else {
                     emit updateLog("未读取到数据");
                     contentEdit->setText("未读取到数据");
-                    resultCombo->setCurrentIndex(1); // 设置为异常
+                    resultCombo->setCurrentIndex(2); // 设置为异常
                 }
             } else {
                 emit updateLog("BLU设备未连接");
                 contentEdit->setText("BLU设备未连接");
-                resultCombo->setCurrentIndex(1); // 设置为异常
+                resultCombo->setCurrentIndex(2); // 设置为异常
             }
             if (m_bluSerial) {
                 m_bluSerial->stopMeasurement();
@@ -633,49 +634,49 @@ void TestThread::run()
             QThread::msleep(2000);
             emit updateProgress(row, 40);
             if (m_bluSerial && m_bluSerial->isConnected()) {
-                QByteArray data = m_bluSerial->readData(0); // 限制最多15000字节
+                QByteArray data = m_bluSerial->readData(0); 
                 emit updateLog(QString("读取到原始数据: %1 字节").arg(data.size()));
                 if (!data.isEmpty()) {
-                    QByteArray remainder; // 创建一个临时变量传递给processSamples
+                    QByteArray remainder; 
                     QVector<double> samples = m_bluSerial->getProtocol()->processSamples(data, remainder);
-                    // 显示样本数量和平均值
+                   
                     if (!samples.isEmpty()) {
                         double avgCurrent = 0.0;
                         for (double sample : samples) {
                             avgCurrent += sample;
                         }
                         avgCurrent /= samples.size();
-                        // 计算功率 P = U * I
+                        
                         double voltage = m_bluSerial->getProtocol()->currentVdd() / 1000.0; // 源电压（V）
                         double power = voltage * avgCurrent / 1000000.0; // 功率（W）
                         emit updateLog(QString("平均电流: %1 mA").arg(avgCurrent/1000.0, 0, 'f', 3));
                         emit updateLog(QString("电源电压: %1 V").arg(voltage, 0, 'f', 3));
                         emit updateLog(QString("功耗: %1 mW").arg(power * 1000, 0, 'f', 3));
                         
-                        double currentInMA = avgCurrent/1000.0; // 转换为mA单位
-                        if (currentInMA < 180) {
+                        double currentInMA = avgCurrent/1000.0; 
+                        if (currentInMA < 250) {
                             contentEdit->setText(QString("平均电流: %1 mA (正常)").arg(currentInMA, 0, 'f', 3));
-                            resultCombo->setCurrentIndex(0); // 设置为正常
+                            resultCombo->setCurrentIndex(1); 
                             emit updateLog("电流测试通过: 平均电流小于180mA");
                         } else {
                             contentEdit->setText(QString("平均电流: %1 mA (超出阈值)").arg(currentInMA, 0, 'f', 3));
-                            resultCombo->setCurrentIndex(1); // 设置为异常
+                            resultCombo->setCurrentIndex(2); 
                             emit updateLog("电流测试失败: 平均电流超过180mA");
                         }
                     } else {
                         emit updateLog("未收集到有效样本");
                         contentEdit->setText("未收集到有效样本");
-                        resultCombo->setCurrentIndex(1); // 设置为异常
+                        resultCombo->setCurrentIndex(2); // 设置为异常
                     }
                 } else {
                     emit updateLog("未读取到数据");
                     contentEdit->setText("未读取到数据");
-                    resultCombo->setCurrentIndex(1); // 设置为异常
+                    resultCombo->setCurrentIndex(2); // 设置为异常
                 }
             } else {
                 emit updateLog("BLU设备未连接");
                 contentEdit->setText("BLU设备未连接");
-                resultCombo->setCurrentIndex(1); // 设置为异常
+                resultCombo->setCurrentIndex(2); // 设置为异常
             }
             if (m_bluSerial) {
                 m_bluSerial->stopMeasurement();
@@ -754,15 +755,15 @@ void TestThread::run()
             if (foundGxwNetwork) {
                 contentEdit->setText(QString("检测到gxw网络，信号强度: %1 dBm").arg(rssiValue));
                 if (rssiValue > -150) {
-                    resultCombo->setCurrentIndex(0); 
+                    resultCombo->setCurrentIndex(1); 
                     emit updateLog("WiFi测试通过: 信号强度良好");
                 } else {
-                    resultCombo->setCurrentIndex(1); 
+                    resultCombo->setCurrentIndex(2); 
                     emit updateLog("WiFi测试不通过: 信号强度较弱");
                 }
             } else {
                 contentEdit->setText("未检测到gxw网络");
-                resultCombo->setCurrentIndex(1); // 设置为异常
+                resultCombo->setCurrentIndex(2); // 设置为异常
                 emit updateLog("WiFi测试不通过: 未检测到gxw网络");
             }
             emit updateProgress(row, 100);
@@ -803,14 +804,14 @@ void TestThread::run()
                 }
                 if (testPassed) {
                     resultText += " (通过)";
-                    resultCombo->setCurrentIndex(0); 
+                    resultCombo->setCurrentIndex(1); 
                 } else {
                     resultText += " (不通过)";
-                    resultCombo->setCurrentIndex(1); 
+                    resultCombo->setCurrentIndex(2); 
                 }
             } else {
                 resultText = "未检测到频率值 (不通过)";
-                resultCombo->setCurrentIndex(1);
+                resultCombo->setCurrentIndex(2);
             }
             emit updateProgress(row, 100);
             contentEdit->setText(resultText);
@@ -827,11 +828,11 @@ void TestThread::run()
                 msgBox.exec();
                 if (msgBox.clickedButton() == passButton) {
                     contentEdit->setText("进入手动模式");
-                    resultCombo->setCurrentIndex(0); // 设置为正常
+                    resultCombo->setCurrentIndex(1); // 设置为正常
                     emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
                 } else if (msgBox.clickedButton() == failButton) {
                     contentEdit->setText("退出手动模式");
-                    resultCombo->setCurrentIndex(1); // 设置为异常
+                    resultCombo->setCurrentIndex(2); // 设置为异常
                     emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
                 }
             }, Qt::BlockingQueuedConnection); 
@@ -861,10 +862,10 @@ void TestThread::run()
                 QPushButton *failButton = msgBox.addButton("失败(Fail)", QMessageBox::RejectRole);
                 msgBox.exec(); 
                 if (msgBox.clickedButton() == passButton) {
-                    resultCombo->setCurrentIndex(0);
+                    resultCombo->setCurrentIndex(1);
                     emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
                 } else if (msgBox.clickedButton() == failButton) {
-                    resultCombo->setCurrentIndex(1);
+                    resultCombo->setCurrentIndex(2);
                     emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
                 }
                 emit updateProgress(row, 100);
@@ -891,10 +892,10 @@ void TestThread::run()
                 QPushButton *failButton = msgBox.addButton("失败(Fail)", QMessageBox::RejectRole);
                 msgBox.exec(); 
                 if (msgBox.clickedButton() == passButton) {
-                    resultCombo->setCurrentIndex(0);
+                    resultCombo->setCurrentIndex(1);
                     emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
                 } else if (msgBox.clickedButton() == failButton) {
-                    resultCombo->setCurrentIndex(1);
+                    resultCombo->setCurrentIndex(2);
                     emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
                 }
                 emit updateProgress(row, 100);
@@ -922,10 +923,10 @@ void TestThread::run()
                 QPushButton *failButton = msgBox.addButton("失败(Fail)", QMessageBox::RejectRole);
                 msgBox.exec(); 
                 if (msgBox.clickedButton() == passButton) {
-                    resultCombo->setCurrentIndex(0);
+                    resultCombo->setCurrentIndex(1);
                     emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
                 } else if (msgBox.clickedButton() == failButton) {
-                    resultCombo->setCurrentIndex(1);
+                    resultCombo->setCurrentIndex(2);
                     emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
                 }
                 emit updateProgress(row, 100);
@@ -950,10 +951,10 @@ void TestThread::run()
                 QPushButton *failButton = msgBox.addButton("失败(Fail)", QMessageBox::RejectRole);
                 msgBox.exec(); 
                 if (msgBox.clickedButton() == passButton) {
-                    resultCombo->setCurrentIndex(0);
+                    resultCombo->setCurrentIndex(1);
                     emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
                 } else if (msgBox.clickedButton() == failButton) {
-                    resultCombo->setCurrentIndex(1);
+                    resultCombo->setCurrentIndex(2);
                     emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
                 }
                 emit updateProgress(row, 100);
@@ -988,10 +989,10 @@ void TestThread::run()
                 QPushButton *failButton = msgBox.addButton("失败(Fail)", QMessageBox::RejectRole);
                 msgBox.exec(); 
                 if (msgBox.clickedButton() == passButton) {
-                    resultCombo->setCurrentIndex(0);
+                    resultCombo->setCurrentIndex(1);
                     emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
                 } else if (msgBox.clickedButton() == failButton) {
-                    resultCombo->setCurrentIndex(1);
+                    resultCombo->setCurrentIndex(2);
                     emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
                 }
                 emit updateProgress(row, 100);
@@ -1022,10 +1023,10 @@ void TestThread::run()
                 QPushButton *failButton = msgBox.addButton("失败(Fail)", QMessageBox::RejectRole);
                 msgBox.exec(); 
                 if (msgBox.clickedButton() == passButton) {
-                    resultCombo->setCurrentIndex(0);
+                    resultCombo->setCurrentIndex(1);
                     emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
                 } else if (msgBox.clickedButton() == failButton) {
-                    resultCombo->setCurrentIndex(1);
+                    resultCombo->setCurrentIndex(2);
                     emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
                 }
                 emit updateProgress(row, 100);
@@ -1056,10 +1057,10 @@ void TestThread::run()
                 QPushButton *failButton = msgBox.addButton("失败(Fail)", QMessageBox::RejectRole);
                 msgBox.exec(); 
                 if (msgBox.clickedButton() == passButton) {
-                    resultCombo->setCurrentIndex(0);
+                    resultCombo->setCurrentIndex(1);
                     emit updateLog("测试通过: " + testName + " (行" + QString::number(row) + ")");
                 } else if (msgBox.clickedButton() == failButton) {
-                    resultCombo->setCurrentIndex(1);
+                    resultCombo->setCurrentIndex(2);
                     emit updateLog("测试失败: " + testName + " (行" + QString::number(row) + ")");
                 }
                 emit updateProgress(row, 100);
@@ -1073,7 +1074,7 @@ void TestThread::run()
         }
         else if (rowId == "scan_sn")
         {
-            resultCombo->setCurrentIndex(0);
+            resultCombo->setCurrentIndex(1);
             emit updateProgress(row, 100);
 
         }
