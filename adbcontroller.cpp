@@ -272,20 +272,20 @@ QString ADBController::executeShellCommand(const QString &command, bool *success
             break;
         }
         
-        // 等待并读取数据
+        
         if (process.waitForReadyRead(100)) {
             QByteArray newData = process.readAll();
-            QString newOutput = QString::fromLocal8Bit(newData);
+            QString newOutput = QString::fromUtf8(newData);
             output += newOutput;
             
-            // 检查是否包含"Return"关键字
+            
             if (newOutput.contains("Return")) {
                 qDebug() << "发现Return关键字，等待200ms后终止";
                 
-                // 等待200ms确保输出完整
+                
                 QThread::msleep(200);
                 
-                // 发送Ctrl+C
+                
                 QByteArray ctrlC;
                 ctrlC.append('\x03');
                 process.write(ctrlC);
@@ -299,7 +299,7 @@ QString ADBController::executeShellCommand(const QString &command, bool *success
     // 确保读取所有剩余输出
     QByteArray remainingData = process.readAll();
     if (!remainingData.isEmpty()) {
-        output += QString::fromLocal8Bit(remainingData);
+        output += QString::fromUtf8(remainingData);
     }
     
     // 最终确保进程已经结束

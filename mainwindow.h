@@ -47,6 +47,7 @@ private slots:
     void resetTable();
     void onTestBootTime(int row, bool on, int voltage = 3500); 
     void onTestSoftReset(int row, bool on); // 处理软复位结果
+    void showSNInputDialog(); // 显示SN扫描对话框
 
 private:
     void setupUi();
@@ -90,6 +91,8 @@ private:
     BLUSerial *bluSerial;
     BLUProtocol *bluProtocol;
     QString bluComPort;
+    QString snopne;
+    QString sntest;
     int bluVoltageValue;
     
     // 配置文件读取的串口信息
@@ -103,8 +106,12 @@ private:
     QDateTime firstResponseTime;
     bool hasReceivedFirstResponse;
     
+    // 设备SN信息
+    QString deviceSN;
+    
     // 用于软复位测试的数据存储
     QString serialReceivedData;
+    QString Title_test = "test_tool 1.1";
 };
 
 #endif // MAINWINDOW_H

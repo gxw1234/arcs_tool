@@ -1054,7 +1054,11 @@ debug/mainwindow.o: mainwindow.cpp mainwindow.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qjsonobject.h \
 		../../qt/5.12.2/mingw73_32/include/QtCore/QJsonArray \
 		../../qt/5.12.2/mingw73_32/include/QtCore/qjsonarray.h \
-		../../qt/5.12.2/mingw73_32/include/QtCore/QJsonValue
+		../../qt/5.12.2/mingw73_32/include/QtCore/QJsonValue \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/QInputDialog \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qinputdialog.h \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/QHeaderView \
+		../../qt/5.12.2/mingw73_32/include/QtWidgets/qheaderview.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o debug\mainwindow.o mainwindow.cpp
 
 debug/smartpowercontroller.o: smartpowercontroller.cpp smartpowercontroller.h \

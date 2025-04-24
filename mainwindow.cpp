@@ -17,6 +17,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonValue>
+#include <QInputDialog>
+#include <QHeaderView>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), statusTimer(nullptr), powerController(nullptr), test_thread(nullptr), serialPort(nullptr)
@@ -24,11 +26,10 @@ MainWindow::MainWindow(QWidget *parent)
     // 安装事件过滤器，捕获整个应用程序的回车键
     qApp->installEventFilter(this);
     
-    setWindowTitle("test_tool");
+
     resize(600, 500);
     powerController = SmartPowerController::getInstance();
     setupUi_();
-
     
     // 读取配置文件
     QSettings settings("cfg.ini", QSettings::IniFormat);
@@ -36,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 直接读取串口信息
     burnComPort = settings.value("Serial/BurnCOM").toString();
     bluComPort = settings.value("BLU/DeviceCOM").toString();
+    snopne = settings.value("SN/open").toString();
     bluVoltageValue = 4000; // 使用固定的默认值
     
     // 初始化协议实例
@@ -43,6 +45,12 @@ MainWindow::MainWindow(QWidget *parent)
     
     // 初始化串口通信实例
     bluSerial = new BLUSerial(bluProtocol, this);
+
+
+    if (snopne =="on")
+    {
+        QTimer::singleShot(500, this, SLOT(showSNInputDialog()));
+    }
 
 }
 
@@ -56,7 +64,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupUi_()
 {
-    setWindowTitle("test_tool 1.1");
+    setWindowTitle(Title_test);
     // 创建中心部件和主布局
     centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
@@ -95,6 +103,8 @@ void MainWindow::setupUi_()
         table_widget->setColumnWidth(i, columnWidthsArray[i].toInt());
     }
 
+    // 设置最后一列自适应宽度
+    table_widget->horizontalHeader()->setStretchLastSection(true);
 
     // 隐藏第一列（ID列）
     table_widget->hideColumn(0);
@@ -152,11 +162,10 @@ void MainWindow::setupUi_()
         QLineEdit *noteEdit = new QLineEdit(rowObj["note"].toString());
         table_widget->setCellWidget(row, 6, noteEdit);
     }
-    
     mainLayout->addWidget(table_widget);
     show_log = new QTextEdit(this);
     show_log->setReadOnly(true);
-    show_log->setMaximumHeight(500);
+    show_log->setMaximumHeight(200);
     mainLayout->addWidget(show_log);
     start_test = new QPushButton("开始测试", this);
     start_test->setDefault(true); // 设置为默认按钮，支持回车键触发
@@ -566,6 +575,14 @@ void MainWindow::start_test_content()
         // 停止测量并关闭BLU设备
         bluSerial->stopMeasurement();
         closeTestSession();
+
+        if (snopne =="on")
+        {
+            showSNInputDialog();
+            deviceSN= "";
+            
+        }
+        
     });
     
     test_thread->start();
@@ -701,12 +718,12 @@ void MainWindow::onTestSoftReset(int row, bool on)
     }
     else{
         if (serialPort && serialPort->isOpen()) {
-            // 断开读取回调连接
+            
             disconnect(serialPort, &QSerialPort::readyRead, this, nullptr);
             serialPort->close();
         }
         
-        // 在关闭串口时检查收集的数据中是否包含"version"关键字
+        
         if (serialReceivedData.contains("version", Qt::CaseInsensitive)) {
             contentEdit->setText("软复位成功，检测到版本信息");
             resultCombo->setCurrentIndex(0); // 设置为正常
@@ -827,4 +844,34 @@ void MainWindow::onTestBootTime(int row, bool on, int voltage)
 void MainWindow::start_test_content_12()
 {
 
+}
+
+// 显示SN扫描对话框
+void MainWindow::showSNInputDialog()
+{
+    bool ok;
+    deviceSN = QInputDialog::getText(this, 
+                                    "扫描SN", 
+                                    "请扫描设备序列号(SN):", 
+                                    QLineEdit::Normal,
+                                    "", 
+                                    &ok);
+    
+    if (ok && !deviceSN.isEmpty()) {
+        if (deviceSN.startsWith("LS"))
+        {
+            QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(0, 3));
+            if (contentEdit) {
+                contentEdit->setText("SN : " + deviceSN);
+            }
+        }
+        else
+        {
+            showSNInputDialog();
+        }
+    }
+    else
+    {
+        showSNInputDialog();
+    }
 }
