@@ -55,6 +55,8 @@ private:
     void setupUi_();
     void initSmartPowerDevice();
     QSerialPort *serialPort;
+    void saveTestLog(); // 保存测试日志到文件
+    void recordSNDeviceID(); // 记录SN和设备ID的对应关系
     
 private:
 
@@ -112,6 +114,7 @@ private:
     // 用于软复位测试的数据存储
     QString serialReceivedData;
     QString Title_test = "test_tool 1.1";
+    QString deviceId_;
 };
 
 #endif // MAINWINDOW_H

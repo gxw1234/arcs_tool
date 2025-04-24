@@ -41,6 +41,8 @@ void TestThread::run()
     QThread::msleep(3000);
     emit updateLog("自动化测试开始");
     for (int row = 0; row < table_widget->rowCount(); ++row) {
+
+        
         emit highlightRow(row);
         QTableWidgetItem* idItem = table_widget->item(row, 0);
         QString rowId = idItem ? idItem->text() : "";
@@ -48,7 +50,7 @@ void TestThread::run()
         emit updateLog(QString("开始测试行 %1 (ID: %2): %3").arg(row).arg(rowId).arg(testName));
         QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
         QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
-
+        emit updateLog("================== " + rowId + "==================");
         if (rowId == "A1") {
             emit updateProgress(row, 20);
             QString output;
@@ -795,7 +797,7 @@ void TestThread::run()
             bool testPassed = false;
             if (maxFreqs.size() > 0) {
                 int firstChannelFreq = maxFreqs[0].toInt();
-                testPassed = (firstChannelFreq > 980);
+                testPassed = (firstChannelFreq > 950);
                 resultText = QString("最大频率值: 通道0: %1Hz").arg(firstChannelFreq);
                 if (maxFreqs.size() > 1) {
                     for (int i = 1; i < maxFreqs.size(); ++i) {

@@ -600,6 +600,12 @@ void MainWindow::start_test_content()
         bluSerial->stopMeasurement();
         closeTestSession();
 
+        // 记录SN和设备ID对应关系
+        recordSNDeviceID();
+        
+        // 保存测试日志到文件
+        saveTestLog();
+        
         if (snopne =="on")
         {
             showSNInputDialog();
@@ -864,14 +870,10 @@ void MainWindow::onTestBootTime(int row, bool on, int voltage)
         }
     }
 }
-
-// 处理测试线程上电/断电事件，操作表格指定行的控件
 void MainWindow::start_test_content_12()
 {
 
 }
-
-// 显示SN扫描对话框
 void MainWindow::showSNInputDialog()
 {
     bool ok;
@@ -896,4 +898,102 @@ void MainWindow::showSNInputDialog()
         }
     }
     
+}
+
+// 保存测试日志到文件
+void MainWindow::saveTestLog()
+{
+    // 创建logs目录（如果不存在）
+    QDir logsDir("./logs/test_log");
+    if (!logsDir.exists()) {
+        logsDir.mkpath(".");
+    }
+    QString currentTime = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
+
+    QString fileName = QString("./logs/test_log/%1_%2_%3.txt")
+                          .arg(currentTime)
+                          .arg(deviceSN.isEmpty() ? "NoSN" : deviceSN)
+                          .arg(deviceId_.isEmpty() ? "NoDeviceID" : deviceId_);
+    
+    QFile logFile(fileName);
+    if (logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream stream(&logFile);
+        stream.setCodec("UTF-8");
+        stream.setGenerateByteOrderMark(true); // 写入UTF-8 BOM头标记
+
+        stream << "Test Time: " << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss") << "\n";
+        stream << "Device SN: " << (deviceSN.isEmpty() ? "Not specified" : deviceSN) << "\n";
+        stream << "Device ID: " << (deviceId_.isEmpty() ? "Not specified" : deviceId_) << "\n";
+        stream << "====================================\n\n";
+        stream << "Table Content:\n";
+        stream << "-----------------------------------\n";
+        QStringList headers;
+        for (int col = 0; col < table_widget->columnCount(); ++col) {
+            if (!table_widget->isColumnHidden(col)) {
+                headers << table_widget->horizontalHeaderItem(col)->text();
+            }
+        }
+        stream << headers.join("\t") << "\n";
+        for (int row = 0; row < table_widget->rowCount(); ++row) {
+            QStringList rowData;
+            
+            for (int col = 0; col < table_widget->columnCount(); ++col) {
+                if (!table_widget->isColumnHidden(col)) {
+                    QString cellContent;
+                    QTableWidgetItem* item = table_widget->item(row, col);
+                    if (item) {
+                        cellContent = item->text();
+                    } else {
+                        QWidget* widget = table_widget->cellWidget(row, col);
+                        if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(widget)) {
+                            cellContent = lineEdit->text();
+                        } else if (QComboBox* comboBox = qobject_cast<QComboBox*>(widget)) {
+                            cellContent = comboBox->currentText();
+                        } else if (QProgressBar* progressBar = qobject_cast<QProgressBar*>(widget)) {
+                            cellContent = QString::number(progressBar->value()) + "%";
+                        }
+                    }
+                    
+                    rowData << cellContent;
+                }
+            }
+            
+            stream << rowData.join("\t") << "\n";
+        }
+        
+        stream << "\n====================================\n\n";
+        
+        
+        stream << "Test Log:\n";
+        stream << "-----------------------------------\n";
+        stream << show_log->toPlainText();
+        
+        logFile.close();
+        
+        show_log->append(QString("测试日志已保存至文件: %1").arg(fileName));
+    } else {
+        show_log->append(QString("无法创建日志文件: %1").arg(fileName));
+    }
+}
+
+
+void MainWindow::recordSNDeviceID()
+{
+    if (deviceSN.isEmpty() || deviceId_.isEmpty()) {
+        return;
+    }
+    QString currentTime = QDateTime::currentDateTime().toString("yyyy-MM-dd_HH:mm:ss");
+    QDir logsDir("./logs");
+    if (!logsDir.exists()) {
+        logsDir.mkpath(".");
+    }
+    QFile recordFile("./logs/Record_sn.txt");
+    if (recordFile.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream stream(&recordFile);
+        stream.setCodec("UTF-8");
+
+        stream << currentTime << "     SN:" << deviceSN << "     DeviceID:" << deviceId_ << "\n";
+
+        recordFile.close();
+    }
 }
