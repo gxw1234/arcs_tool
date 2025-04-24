@@ -24,6 +24,8 @@ signals:
     void updateProgress(int row, int value);  // 自定义信号，用于更新进度条
     void updateResult(int row, const QString &result);  // 自定义信号，用于更新结果列
     void updateBootTime(int row, bool on, int voltage = 3500);  // 自定义信号，用于更新上电时间，添加row参数和电压参数，默认3500mV
+    void highlightRow(int row);  // 自定义信号，用于高亮当前测试行
+    void updateSoftReset(int row, bool on);  // 自定义信号，用于更新软复位结果，on表示是否完成
 
 
 private:

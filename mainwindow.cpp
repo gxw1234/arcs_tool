@@ -19,7 +19,7 @@
 #include <QJsonValue>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), statusTimer(nullptr), powerController(nullptr), test_thread(nullptr)
+    : QMainWindow(parent), statusTimer(nullptr), powerController(nullptr), test_thread(nullptr), serialPort(nullptr)
 {
     // 安装事件过滤器，捕获整个应用程序的回车键
     qApp->installEventFilter(this);
@@ -68,10 +68,8 @@ void MainWindow::setupUi_()
         show_log->append("错误: 无法打开配置文件 d:/py/qtqbj/table_config.json");
         return;
     }
-
     QByteArray configData = configFile.readAll();
     configFile.close();
-
     QJsonParseError jsonError;
     QJsonDocument jsonDoc = QJsonDocument::fromJson(configData, &jsonError);
     if (jsonError.error != QJsonParseError::NoError) {
@@ -100,10 +98,8 @@ void MainWindow::setupUi_()
 
     // 隐藏第一列（ID列）
     table_widget->hideColumn(0);
-
     for (int row = 0; row < rowsArray.size(); row++) {
         QJsonObject rowObj = rowsArray[row].toObject();
-        
         // 添加ID列，但隐藏显示
         QTableWidgetItem *idItem = new QTableWidgetItem(rowObj["id"].toString());
         idItem->setTextAlignment(Qt::AlignCenter);
@@ -121,7 +117,10 @@ void MainWindow::setupUi_()
             modeEdit->setStyleSheet("background-color: lightgreen;");
         } else if (modeText == "手动") {
             modeEdit->setStyleSheet("background-color: lightblue;");
+        }else if (modeText == "提示") {
+            modeEdit->setStyleSheet("background-color: pink;");
         }
+        
         
         table_widget->setCellWidget(row, 2, modeEdit);
         
@@ -157,7 +156,7 @@ void MainWindow::setupUi_()
     mainLayout->addWidget(table_widget);
     show_log = new QTextEdit(this);
     show_log->setReadOnly(true);
-    show_log->setMaximumHeight(200);
+    show_log->setMaximumHeight(500);
     mainLayout->addWidget(show_log);
     start_test = new QPushButton("开始测试", this);
     start_test->setDefault(true); // 设置为默认按钮，支持回车键触发
@@ -512,6 +511,11 @@ void MainWindow::start_test_content()
     // 创建并启动测试线程，传递烧录串口
     test_thread = new TestThread(table_widget, bluSerial, this, burnComPort);
 
+
+
+    connect(test_thread, &TestThread::updateSoftReset, this, &MainWindow::onTestSoftReset);
+
+
     connect(test_thread, &TestThread::updateBootTime, this, &MainWindow::onTestBootTime);
     
     // 连接测试线程的信号
@@ -542,6 +546,11 @@ void MainWindow::start_test_content()
                 }
             }
         }
+    });
+    // 高亮显示当前测试行
+    connect(test_thread, &TestThread::highlightRow, this, [this](int row) {
+        // 高亮显示指定行
+        table_widget->selectRow(row);
     });
     
     // 测试完成后关闭设备
@@ -652,6 +661,66 @@ void MainWindow::resetTable()
     }
 }
 
+void MainWindow::onTestSoftReset(int row, bool on)
+{
+    QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
+    QProgressBar *progressBar = qobject_cast<QProgressBar*>(table_widget->cellWidget(row, 4));
+    QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
+
+    if(on){
+        // 清空之前收集的数据
+        serialReceivedData.clear();
+
+       
+        if (!serialPort) {
+            serialPort = new QSerialPort(this);
+        }
+        if (!serialPort->isOpen()) {
+            QString portName = burnComPort; // 可以从设置中读取或使用固定值
+            serialPort->setPortName(portName);
+            serialPort->setBaudRate(921600);
+            if (serialPort->open(QIODevice::ReadWrite)) {
+                // 禁用DTR和RTS信号，避免影响设备启动
+                serialPort->setDataTerminalReady(false);
+                serialPort->setRequestToSend(false);
+                serialPort->clear();
+                show_log->append("串口已打开: " + portName);
+                connect(serialPort, &QSerialPort::readyRead, this, [this]() {
+                    QByteArray data = serialPort->readAll();
+                    if (!data.isEmpty()) {
+                        // 将接收到的所有数据存储起来
+                        serialReceivedData.append(QString::fromUtf8(data));
+                        show_log->append("收到数据: " + QString::fromUtf8(data));
+                    }
+                });
+            }
+        }
+        else{
+            show_log->append("----串口已打开失败: " + burnComPort);
+        }
+    }
+    else{
+        if (serialPort && serialPort->isOpen()) {
+            // 断开读取回调连接
+            disconnect(serialPort, &QSerialPort::readyRead, this, nullptr);
+            serialPort->close();
+        }
+        
+        // 在关闭串口时检查收集的数据中是否包含"version"关键字
+        if (serialReceivedData.contains("version", Qt::CaseInsensitive)) {
+            contentEdit->setText("软复位成功，检测到版本信息");
+            resultCombo->setCurrentIndex(0); // 设置为正常
+            show_log->append("软复位测试通过：检测到版本信息");
+        } else {
+            contentEdit->setText("软复位失败，未检测到版本信息");
+            resultCombo->setCurrentIndex(1); // 设置为异常
+            show_log->append("软复位测试失败：未检测到版本信息");
+        }
+    }
+
+    
+}
+
 void MainWindow::onTestBootTime(int row, bool on, int voltage)
 {
     QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
@@ -734,7 +803,7 @@ void MainWindow::onTestBootTime(int row, bool on, int voltage)
                 progressBar->setValue(100);
             }
             if (resultCombo) {
-                resultCombo->setCurrentIndex(1); // 设置为"正常"
+                resultCombo->setCurrentIndex(0); // 设置为正常
             }
             
             show_log->append(bootTimeStr);
@@ -746,7 +815,7 @@ void MainWindow::onTestBootTime(int row, bool on, int voltage)
                 progressBar->setValue(0);
             }
             if (resultCombo) {
-                resultCombo->setCurrentIndex(2); // 设置为"异常"
+                resultCombo->setCurrentIndex(1); // 设置为异常
             }
             
             show_log->append("未收到任何响应，无法计算启动耗时");

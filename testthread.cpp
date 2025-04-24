@@ -42,6 +42,8 @@ void TestThread::run()
     QThread::msleep(3000);
     emit updateLog("自动化测试开始");
     for (int row = 0; row < table_widget->rowCount(); ++row) {
+
+        emit highlightRow(row);
         // 获取当前行的ID和测试名称
         QTableWidgetItem* idItem = table_widget->item(row, 0);
         QString rowId = idItem ? idItem->text() : "";
@@ -317,6 +319,13 @@ void TestThread::run()
         }
         else if (rowId == "E1") {
             emit updateProgress(row, 20);
+            if (!m_bluSerial->setVoltage(3500)) {
+                emit updateLog("设置源电压失败");
+            }
+            else{
+                emit updateLog("已设置源电压为3.5V");
+            }
+            QThread::msleep(2000);
             emit updateLog("开始连续测量...");
             if (m_bluSerial && !m_bluSerial->startMeasurement()) {
                 emit updateLog("开始测量失败");
@@ -343,8 +352,7 @@ void TestThread::run()
                         emit updateLog(QString("平均电流: %1 mA").arg(avgCurrent/1000.0, 0, 'f', 3));
                         emit updateLog(QString("电源电压: %1 V").arg(voltage, 0, 'f', 3));
                         emit updateLog(QString("功耗: %1 mW").arg(power * 1000, 0, 'f', 3));
-                       
-                        // 添加电流阈值判断（180μA）
+                        
                         double currentInMA = avgCurrent/1000.0; // 转换为mA单位
                         if (currentInMA < 180) {
                             contentEdit->setText(QString("平均电流: %1 mA (正常)").arg(currentInMA, 0, 'f', 3));
@@ -375,10 +383,169 @@ void TestThread::run()
             if (m_bluSerial) {
                 m_bluSerial->stopMeasurement();
             }
-
             emit updateProgress(row, 100); // 设置进度为100%
             emit updateLog("已完成行 " + QString::number(row) + ": 测量电流");
           
+        }
+        else if (rowId == "E2") {
+            emit updateProgress(row, 20);
+            if (!m_bluSerial->setVoltage(4000)) {
+                emit updateLog("设置源电压失败");
+            }
+            else{
+                emit updateLog("已设置源电压为4V");
+            }
+            QThread::msleep(2000);
+            emit updateLog("开始连续测量...");
+            if (m_bluSerial && !m_bluSerial->startMeasurement()) {
+                emit updateLog("开始测量失败");
+                return;
+            }
+            QThread::msleep(2000);
+            emit updateProgress(row, 40);
+            if (m_bluSerial && m_bluSerial->isConnected()) {
+                QByteArray data = m_bluSerial->readData(0); // 限制最多15000字节
+                emit updateLog(QString("读取到原始数据: %1 字节").arg(data.size()));
+                if (!data.isEmpty()) {
+                    QByteArray remainder; // 创建一个临时变量传递给processSamples
+                    QVector<double> samples = m_bluSerial->getProtocol()->processSamples(data, remainder);
+                    // 显示样本数量和平均值
+                    if (!samples.isEmpty()) {
+                        double avgCurrent = 0.0;
+                        for (double sample : samples) {
+                            avgCurrent += sample;
+                        }
+                        avgCurrent /= samples.size();
+                        // 计算功率 P = U * I
+                        double voltage = m_bluSerial->getProtocol()->currentVdd() / 1000.0; // 源电压（V）
+                        double power = voltage * avgCurrent / 1000000.0; // 功率（W）
+                        emit updateLog(QString("平均电流: %1 mA").arg(avgCurrent/1000.0, 0, 'f', 3));
+                        emit updateLog(QString("电源电压: %1 V").arg(voltage, 0, 'f', 3));
+                        emit updateLog(QString("功耗: %1 mW").arg(power * 1000, 0, 'f', 3));
+                        
+                        double currentInMA = avgCurrent/1000.0; // 转换为mA单位
+                        if (currentInMA < 180) {
+                            contentEdit->setText(QString("平均电流: %1 mA (正常)").arg(currentInMA, 0, 'f', 3));
+                            resultCombo->setCurrentIndex(0); // 设置为正常
+                            emit updateLog("电流测试通过: 平均电流小于180mA");
+                        } else {
+                            contentEdit->setText(QString("平均电流: %1 mA (超出阈值)").arg(currentInMA, 0, 'f', 3));
+                            resultCombo->setCurrentIndex(1); // 设置为异常
+                            emit updateLog("电流测试失败: 平均电流超过180mA");
+                        }
+                    } else {
+                        emit updateLog("未收集到有效样本");
+                        contentEdit->setText("未收集到有效样本");
+                        resultCombo->setCurrentIndex(1); // 设置为异常
+                    }
+                } else {
+                    emit updateLog("未读取到数据");
+                    contentEdit->setText("未读取到数据");
+                    resultCombo->setCurrentIndex(1); // 设置为异常
+                }
+            } else {
+                emit updateLog("BLU设备未连接");
+                contentEdit->setText("BLU设备未连接");
+                resultCombo->setCurrentIndex(1); // 设置为异常
+            }
+            
+            
+            if (m_bluSerial) {
+                m_bluSerial->stopMeasurement();
+            }
+            emit updateProgress(row, 100); // 设置进度为100%
+            emit updateLog("已完成行 " + QString::number(row) + ": 测量电流");
+          
+        }
+        else if (rowId == "E3") {
+            emit updateProgress(row, 20);
+            if (!m_bluSerial->setVoltage(5000)) {
+                emit updateLog("设置源电压失败");
+            }
+            else{
+                emit updateLog("已设置源电压为5V");
+            }
+            QThread::msleep(2000);
+            emit updateLog("开始连续测量...");
+            if (m_bluSerial && !m_bluSerial->startMeasurement()) {
+                emit updateLog("开始测量失败");
+                return;
+            }
+            QThread::msleep(2000);
+            emit updateProgress(row, 40);
+            if (m_bluSerial && m_bluSerial->isConnected()) {
+                QByteArray data = m_bluSerial->readData(0); // 限制最多15000字节
+                emit updateLog(QString("读取到原始数据: %1 字节").arg(data.size()));
+                if (!data.isEmpty()) {
+                    QByteArray remainder; // 创建一个临时变量传递给processSamples
+                    QVector<double> samples = m_bluSerial->getProtocol()->processSamples(data, remainder);
+                    // 显示样本数量和平均值
+                    if (!samples.isEmpty()) {
+                        double avgCurrent = 0.0;
+                        for (double sample : samples) {
+                            avgCurrent += sample;
+                        }
+                        avgCurrent /= samples.size();
+                        // 计算功率 P = U * I
+                        double voltage = m_bluSerial->getProtocol()->currentVdd() / 1000.0; // 源电压（V）
+                        double power = voltage * avgCurrent / 1000000.0; // 功率（W）
+                        emit updateLog(QString("平均电流: %1 mA").arg(avgCurrent/1000.0, 0, 'f', 3));
+                        emit updateLog(QString("电源电压: %1 V").arg(voltage, 0, 'f', 3));
+                        emit updateLog(QString("功耗: %1 mW").arg(power * 1000, 0, 'f', 3));
+                        
+                        double currentInMA = avgCurrent/1000.0; // 转换为mA单位
+                        if (currentInMA < 180) {
+                            contentEdit->setText(QString("平均电流: %1 mA (正常)").arg(currentInMA, 0, 'f', 3));
+                            resultCombo->setCurrentIndex(0); // 设置为正常
+                            emit updateLog("电流测试通过: 平均电流小于180mA");
+                        } else {
+                            contentEdit->setText(QString("平均电流: %1 mA (超出阈值)").arg(currentInMA, 0, 'f', 3));
+                            resultCombo->setCurrentIndex(1); // 设置为异常
+                            emit updateLog("电流测试失败: 平均电流超过180mA");
+                        }
+                    } else {
+                        emit updateLog("未收集到有效样本");
+                        contentEdit->setText("未收集到有效样本");
+                        resultCombo->setCurrentIndex(1); // 设置为异常
+                    }
+                } else {
+                    emit updateLog("未读取到数据");
+                    contentEdit->setText("未读取到数据");
+                    resultCombo->setCurrentIndex(1); // 设置为异常
+                }
+            } else {
+                emit updateLog("BLU设备未连接");
+                contentEdit->setText("BLU设备未连接");
+                resultCombo->setCurrentIndex(1); // 设置为异常
+            }
+            
+            
+            if (m_bluSerial) {
+                m_bluSerial->stopMeasurement();
+            }
+            emit updateProgress(row, 100); // 设置进度为100%
+            emit updateLog("已完成行 " + QString::number(row) + ": 测量电流");
+          
+        }
+        else if (rowId == "F1")
+        {
+            emit updateProgress(row, 20);
+            emit updateLog("正在软复位...");
+            emit updateSoftReset(row, true);
+            QThread::msleep(100);
+            QString command = "test_reboot_cmd";
+            bool shellSuccess = false;
+            QString output = m_adbController.executeShellCommand(command, &shellSuccess);
+            // emit updateLog("命令输出: \n" + output);
+
+            QThread::msleep(1000);
+            emit updateSoftReset(row, false);
+            emit updateProgress(row, 100);
+        }
+        else if (rowId == "G1")
+        {
+
+
         }
         else if (rowId == "S0") {
             emit updateProgress(row, 20);
@@ -529,7 +696,7 @@ void TestThread::run()
             //     }
             // }, Qt::BlockingQueuedConnection); // 使用阻塞方式确保对话框处理完成后再继续
         }
-        QThread::msleep(500);
+        QThread::msleep(100);
     }
     emit updateLog("所有测试已完成");
 }

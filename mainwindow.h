@@ -45,7 +45,8 @@ private slots:
     void start_test_content_12();
     void start_test_content();
     void resetTable();
-    void onTestBootTime(int row, bool on, int voltage = 3500); // 处理上电/断电事件与时间测量，添加电压参数
+    void onTestBootTime(int row, bool on, int voltage = 3500); 
+    void onTestSoftReset(int row, bool on); // 处理软复位结果
 
 private:
     void setupUi();
@@ -101,6 +102,9 @@ private:
     QDateTime powerOnTime;
     QDateTime firstResponseTime;
     bool hasReceivedFirstResponse;
+    
+    // 用于软复位测试的数据存储
+    QString serialReceivedData;
 };
 
 #endif // MAINWINDOW_H
