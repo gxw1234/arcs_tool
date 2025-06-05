@@ -1,0 +1,184 @@
+{
+    "columns": ["ID", "测试项目", "测试模式", "测试内容", "进度", "结果", "备注"],
+    "columnWidths": [80, 300, 100, 650, 150, 150, 350],
+    "rows": [
+        {
+            "id": "scan_sn",
+            "name": "扫码SN",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "B1",
+            "name": "检测adb设备",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "C2",
+            "name": "快速上下电（100ms）",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "E1",
+            "name": "供电3.5V读取静态功耗",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "E2",
+            "name": "供电4V读取静态功耗",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "E3",
+            "name": "供电5V读取静态功耗",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "D1",
+            "name": "供电3.5V开发板上电时间",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "D2",
+            "name": "供电4V开发板上电时间",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "D2",
+            "name": "供电5V开发板上电时间",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+       
+        {
+            "id": "E4",
+            "name": "息屏的静态功耗",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "E5",
+            "name": "满载的静态功耗",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "F1",
+            "name": "软件复位",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "F2",
+            "name": "看门狗复位",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "G1",
+            "name": "WIFI 扫描",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "G2",
+            "name": "自播自录",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "B2",
+            "name": "adb push  pull (20MB)",
+            "mode": "自动",
+            "content": "",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "S0",
+            "name": "准备进入手动模式",
+            "mode": "提示",
+            "content": "准备进入手动模式，按回车进入手动模式",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "S3_1",
+            "name": "循环调节背光为",
+            "mode": "手动",
+            "content": "调节背光为20，判断背光是否有变化",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "S4",
+            "name": "OCR扫描",
+            "mode": "手动",
+            "content": "正常供电 扫描，请听音频，看屏是否有显示",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "S4_1",
+            "name": "低电OCR扫描",
+            "mode": "手动",
+            "content": "供电 3.5V 扫描，请听音频，看屏是否有显示",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "S4_2",
+            "name": "高电OCR扫描",
+            "mode": "手动",
+            "content": "供电 5V扫描，请听音频，看屏是否有显示",
+            "progress": "",
+            "note": ""
+        },
+        {
+            "id": "S5",
+            "name": "效准触摸",
+            "mode": "手动",
+            "content": "效准触摸",
+            "progress": "",
+            "note": ""
+        }
+
+    ]
+}

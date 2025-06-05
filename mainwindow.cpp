@@ -23,36 +23,28 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), statusTimer(nullptr), powerController(nullptr), test_thread(nullptr), serialPort(nullptr), allowEnterToStartTest(true)
 {
-
     qApp->installEventFilter(this);
-    
-
     resize(600, 500);
     powerController = SmartPowerController::getInstance();
     setupUi_();
-    
-
     QSettings settings("cfg.ini", QSettings::IniFormat);
     burnComPort = settings.value("Serial/BurnCOM").toString();
     bluComPort = settings.value("BLU/DeviceCOM").toString();
     snopne = settings.value("SN/open").toString();
-    bluVoltageValue = 4000;
-    
+    Connect_Internet=settings.value("IN/Internet").toString();
+    Checkpoint=settings.value("CP/InterneCheckpointt").toString();
 
+    bluVoltageValue = 4000;
     bluProtocol = new BLUProtocol(this);
     bluSerial = new BLUSerial(bluProtocol, this);
-
-
     if (snopne =="on")
     {
         QTimer::singleShot(500, this, SLOT(showSNInputDialog()));
     }
-
 }
 
 MainWindow::~MainWindow()
 {
-
     if (bluSerial) {
         bluSerial->closePort();
     }
@@ -145,10 +137,11 @@ void MainWindow::setupUi_()
         QStringList items;
         items <<"未测试"<< "正常" << "异常";
         resultCombo->addItems(items);
-        resultCombo->setCurrentIndex(0); // 默认选择未测试
+        resultCombo->setCurrentIndex(0); 
         resultCombo->setItemData(0, QBrush(QColor("blue")), Qt::ForegroundRole);
         resultCombo->setItemData(1, QBrush(QColor("green")), Qt::ForegroundRole);
         resultCombo->setItemData(2, QBrush(QColor("red")), Qt::ForegroundRole);
+        resultCombo->setEnabled(false); 
         connect(resultCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), [resultCombo](int index) {
             QColor color;
             switch(index) {
@@ -157,15 +150,13 @@ void MainWindow::setupUi_()
                 case 2: color = QColor("red"); break;
                 default: color = QColor("black"); break;
             }
-            
             resultCombo->setStyleSheet(QString("QComboBox { color: %1; }").arg(color.name()));
         });
         
-        resultCombo->setStyleSheet("QComboBox { color: blue; }"); // 默认"未测试"项为蓝色
+        resultCombo->setStyleSheet("QComboBox { color: blue; }"); 
         
         table_widget->setCellWidget(row, 5, resultCombo);
-        
-        // 备注列
+
         QLineEdit *noteEdit = new QLineEdit(rowObj["note"].toString());
         table_widget->setCellWidget(row, 6, noteEdit);
     }
@@ -184,7 +175,7 @@ void MainWindow::setupUi_()
 
 void MainWindow::setupUi()
 {
-    // 创建中心部件和主布局
+
     centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
@@ -193,7 +184,6 @@ void MainWindow::setupUi()
     timeLabel->setAlignment(Qt::AlignRight);
     timeLabel->setStyleSheet("font-size: 14px; color: #666;");
     mainLayout->addWidget(timeLabel);
-    
     statusLabel = new QLabel("就绪中...", this);
     statusLabel->setAlignment(Qt::AlignCenter);
     statusLabel->setStyleSheet("font-size: 14px; color: #666; margin-bottom: 10px;");
@@ -257,10 +247,9 @@ void MainWindow::setupUi()
     
     mainLayout->addWidget(statusGroupBox);
     
-    // 设置间距
     mainLayout->addStretch();
     
-    // 连接信号和槽
+
     connect(connectButton, &QPushButton::clicked, this, &MainWindow::onConnectButtonClicked);
     connect(outputOnButton, &QPushButton::clicked, this, &MainWindow::onOutputOnButtonClicked);
     connect(outputOffButton, &QPushButton::clicked, this, &MainWindow::onOutputOffButtonClicked);
@@ -271,7 +260,7 @@ void MainWindow::initSmartPowerDevice()
     int deviceCount = powerController->getDeviceCount();
     show_log->append(QString("可用设备：%1").arg(deviceCount));
     if (!powerController->isConnected()) {
-        // 连接设备
+
         if (powerController->connectDevice(0)) {
             show_log->append("设备已连接");
         } else {
@@ -281,9 +270,9 @@ void MainWindow::initSmartPowerDevice()
     if (powerController->isConnected()) {
         double voltage = 4.5;
         double current = 1.5;
-        // 开启输出
+
         if (powerController->setOutput(true, voltage, current)) {
-            // 更新UI状态
+
             show_log->append(QString("开启输出: %1V, %2A").arg(voltage).arg(current));
 
         } else {
@@ -303,25 +292,24 @@ void MainWindow::updateTime()
 void MainWindow::onConnectButtonClicked()
 {
     if (!powerController->isConnected()) {
-        // 连接设备
+
         if (powerController->connectDevice(0)) {
-            // 更新UI状态
+
             statusLabel->setText("设备已连接");
             statusLabel->setStyleSheet("color: green; font-weight: bold;");
             connectButton->setText("断开连接");
             controlGroupBox->setEnabled(true);
             statusGroupBox->setEnabled(true);
             
-            // 启动状态更新定时器
             statusTimer->start(500);  // 每500毫秒更新一次状态
         } else {
             QMessageBox::critical(this, "错误", "无法连接到SmartPower设备");
         }
     } else {
-        // 断开连接
+
         statusTimer->stop();
         powerController->disconnectDevice();
-        // 手动更新UI状态
+
         statusLabel->setText("设备已断开连接");
         statusLabel->setStyleSheet("color: orange;");
         connectButton->setText("连接设备");
@@ -329,8 +317,6 @@ void MainWindow::onConnectButtonClicked()
         statusGroupBox->setEnabled(false);
         outputOnButton->setEnabled(true);
         outputOffButton->setEnabled(false);
-        
-        // 重置状态显示
         voltageLabel->setText("-- V");
         currentLabel->setText("-- A");
         bncLabel->setText("--");
@@ -340,7 +326,6 @@ void MainWindow::onConnectButtonClicked()
 void MainWindow::onOutputOnButtonClicked()
 {
     if (powerController->isConnected()) {
-        // 获取用户输入的电压和电流值
         bool okV = false, okC = false;
         double voltage = voltageEdit->text().toDouble(&okV);
         double current = currentEdit->text().toDouble(&okC);
@@ -349,10 +334,9 @@ void MainWindow::onOutputOnButtonClicked()
             QMessageBox::warning(this, "警告", "请输入有效的电压和电流值");
             return;
         }
-        
-        // 开启输出
+
         if (powerController->setOutput(true, voltage, current)) {
-            // 更新UI状态
+
             statusLabel->setText(QString("开启输出: %1V, %2A").arg(voltage).arg(current));
             outputOnButton->setEnabled(false);
             outputOffButton->setEnabled(true);
@@ -414,20 +398,15 @@ void MainWindow::combo_changed_8(int index)
     }
 }
 
-// 事件过滤器实现，捕获回车键事件
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
-    // 捕获回车键事件 - 只处理KeyPress事件，避免重复触发
     if (event->type() == QEvent::KeyPress) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
         
-        // 如果按下回车键或回车键
         if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
-            // 检查是否允许回车键触发测试
+
             if (allowEnterToStartTest) {
-                // 且开始测试按钮存在且可用且没有测试线程运行
                 if (start_test && start_test->isEnabled() && (!test_thread || !test_thread->isRunning())) {
-                    // 立即聚焦并点击开始测试按钮
                     start_test->setFocus();
                     start_test->click();
                     qDebug() << "回车键触发了开始测试";
@@ -436,48 +415,41 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
             }
         }
     } 
-    // ShortcutOverride事件也需要捕获，但不重复触发点击
     else if (event->type() == QEvent::ShortcutOverride) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
         if ((keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) && 
             allowEnterToStartTest && start_test && start_test->isEnabled()) {
-            // 只标记事件已处理，但不触发点击
             event->accept();
             return true;
         }
     }
-    
-    // 其他事件默认处理
     return QMainWindow::eventFilter(watched, event);
 }
 
-// 连接wifi按钮点击处理函数
+
 void MainWindow::start_test_content_11()
 {
-    // 实现连接wifi功能
+
     qDebug() << "开始连接wifi测试";
-    // 在这里添加连接wifi的具体实现
-    // 可以通过adb命令或其他方式连接设备wifi
+
 }
 
 
 void MainWindow::start_test_content()
 {
-    qDebug() << "开始测试";
-    
-    // 重置表格
+
     resetTable();
     
-    // 检查是否有正在运行的测试线程
+
     if (test_thread && test_thread->isRunning()) {
         test_thread->requestStop();
         test_thread->wait();
         delete test_thread;
         test_thread = nullptr;
     }
-    // 禁用开始按钮
+
     start_test->setEnabled(false);
-    // 连接并初始化BLU设备
+
     show_log->append("连接BLU设备...");
     if (!bluSerial->connectToPort(bluComPort, 9600)) {
         show_log->append("无法打开端口：" + bluComPort);
@@ -485,7 +457,7 @@ void MainWindow::start_test_content()
         return;
     }
     show_log->append("设备连接成功");
-    // 获取设备修正因子
+
     QByteArray metaData = bluSerial->getMetadata();
     if (metaData.isEmpty()) {
         show_log->append("读取设备元数据失败，使用默认值");
@@ -497,8 +469,7 @@ void MainWindow::start_test_content()
             show_log->append("解析校准因子失败，使用默认值");
         }
     }
-    
-    // 切换到源表模式
+ 
     if (!bluSerial->setMode(BLUMode::SOURCE_MODE)) {
         show_log->append("切换到源表模式失败");
         closeTestSession();
@@ -506,7 +477,6 @@ void MainWindow::start_test_content()
     }
     show_log->append("已切换到源表模式");
     
-    // 设置源电压为默认值
     if (!bluSerial->setVoltage(bluVoltageValue)) {
         show_log->append("设置源电压失败");
         closeTestSession();
@@ -515,26 +485,23 @@ void MainWindow::start_test_content()
     
     show_log->append(QString("已设置源电压为 %1V").arg(bluVoltageValue/1000.0));
     
-    // 打开DUT电源
     if (!bluSerial->toggleDUTPower(true)) {
         show_log->append("打开DUT电源失败");
         closeTestSession();
         return;
     }
-    
+
+
+  
     show_log->append("已打开DUT电源");
-    
-    // 直接创建测试线程，去掉原月5秒延时
     show_log->append("创建测试线程...");
-    
-    // 创建并启动测试线程，传递烧录串口
-    test_thread = new TestThread(table_widget, bluSerial, this, burnComPort);
+    test_thread = new TestThread(table_widget, bluSerial, this, burnComPort,Connect_Internet,Checkpoint);
 
 
 
     connect(test_thread, &TestThread::updateSoftReset, this, &MainWindow::onTestSoftReset);
     connect(test_thread, &TestThread::updatedeviceId, this, &MainWindow::updatedeviceId);
-
+    connect(test_thread, &TestThread::updateipValue, this, &MainWindow::updateipValue_);
     connect(test_thread, &TestThread::updateBootTime, this, &MainWindow::onTestBootTime);
     
     // 连接测试线程的信号
@@ -566,12 +533,14 @@ void MainWindow::start_test_content()
             }
         }
     });
-    // 高亮显示当前测试行
+
     connect(test_thread, &TestThread::highlightRow, this, [this](int row) {
-        // 高亮显示指定行
         table_widget->selectRow(row);
     });
-    
+
+    // 连接测试内容更新信号
+    connect(test_thread, &TestThread::updateTestContent, this, &MainWindow::updateTestContent_);
+
     // 测试完成后关闭设备
     connect(test_thread, &TestThread::finished, this, [this]() {
         start_test->setEnabled(true);
@@ -581,24 +550,15 @@ void MainWindow::start_test_content()
             test_thread = nullptr;
         }
         show_log->append("测试线程已完成");
-        
-        // 停止测量并关闭BLU设备
         bluSerial->stopMeasurement();
         closeTestSession();
-
-        // 记录SN和设备ID对应关系
         recordSNDeviceID();
-        
-        // 保存测试日志到文件
         saveTestLog();
-        
         if (snopne =="on")
         {
             showSNInputDialog();
-            deviceSN= "";
-            
+           
         }
-        
     });
     
     test_thread->start();
@@ -623,11 +583,11 @@ void MainWindow::closeTestSession()
 // 表格复位函数
 void MainWindow::resetTable()
 {
-    // 从配置文件重新加载数据
-    QFile configFile("d:/py/qtqbj/table_config.json");
+
+    QFile configFile("./table_config.json");
     if (!configFile.open(QIODevice::ReadOnly)) {
         qWarning("无法打开表格配置文件!");
-        show_log->append("错误: 无法打开配置文件 d:/py/qtqbj/table_config.json");
+        show_log->append("错误: 无法打开配置文件 ./table_config.json");
         return;
     }
 
@@ -645,7 +605,7 @@ void MainWindow::resetTable()
     QJsonObject jsonObj = jsonDoc.object();
     QJsonArray rowsArray = jsonObj["rows"].toArray();
     
-    // 清空日志
+
     show_log->clear();
     show_log->append("表格已复位到初始状态");
     
@@ -704,6 +664,15 @@ void MainWindow::updatedeviceId(const QString &deviceId)
     deviceId_ = deviceId;
     
 }
+
+void MainWindow::updateTestContent_(int row, const QString &content)
+{
+    QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
+    if (contentEdit) {
+        contentEdit->setText(content);
+    }
+}
+
 void MainWindow::onTestSoftReset(int row, bool on)
 {
     QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
@@ -715,7 +684,7 @@ void MainWindow::onTestSoftReset(int row, bool on)
             serialPort = new QSerialPort(this);
         }
         if (!serialPort->isOpen()) {
-            QString portName = burnComPort; // 可以从设置中读取或使用固定值
+            QString portName = burnComPort; 
             serialPort->setPortName(portName);
             serialPort->setBaudRate(921600);
             if (serialPort->open(QIODevice::ReadWrite)) {
@@ -824,9 +793,8 @@ void MainWindow::onTestBootTime(int row, bool on, int voltage)
         // 断电操作
         // 关闭串口
         if (serialPort && serialPort->isOpen()) {
-            // 断开读取回调连接
-            disconnect(serialPort, &QSerialPort::readyRead, this, nullptr);
             
+            disconnect(serialPort, &QSerialPort::readyRead, this, nullptr);
             serialPort->close();
         }
        
@@ -834,7 +802,6 @@ void MainWindow::onTestBootTime(int row, bool on, int voltage)
         if (hasReceivedFirstResponse) {
             int bootTime = powerOnTime.msecsTo(firstResponseTime);
             QString bootTimeStr = QString("上电耗时: %1 ms").arg(bootTime);
-            
             if (contentEdit) {
                 contentEdit->setText(bootTimeStr);
             }
@@ -844,7 +811,6 @@ void MainWindow::onTestBootTime(int row, bool on, int voltage)
             if (resultCombo) {
                 resultCombo->setCurrentIndex(1 ); // 设置为正常
             }
-            
             show_log->append(bootTimeStr);
         } else {
             if (contentEdit) {
@@ -856,7 +822,6 @@ void MainWindow::onTestBootTime(int row, bool on, int voltage)
             if (resultCombo) {
                 resultCombo->setCurrentIndex(2); // 设置为异常
             }
-            
             show_log->append("未收到任何响应，无法计算启动耗时");
         }
     }
@@ -868,26 +833,46 @@ void MainWindow::start_test_content_12()
 void MainWindow::showSNInputDialog()
 {
     allowEnterToStartTest = false;
-    
     bool ok;
     QString text;
-    
+    bool hasAbnormalTest = false;
+    bool hasNormalTest = false;
+    for (int row = 0; row < table_widget->rowCount(); ++row) {
+        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
+        if (resultCombo) {
+            if (resultCombo->currentIndex() == 2) { // 2表示"异常"
+                hasAbnormalTest = true;
+                break;
+            } else if (resultCombo->currentIndex() == 1) { // 1表示"正常"
+                hasNormalTest = true;
+            }
+        }
+    }
+    QInputDialog inputDialog(this);
+    if (hasAbnormalTest) {
+        inputDialog.setWindowTitle(tr("测试异常 - 扫描SN"));
+        inputDialog.setLabelText(tr("<span style='font-size:14pt; font-weight:bold; color:red;'>测试异常！请注意检查后再录入SN:</span>"));
+        inputDialog.setStyleSheet("QInputDialog { background-color: #ffdddd; }");
+    } else if (hasNormalTest) {
+        inputDialog.setWindowTitle(tr("测试正常 - 扫描SN"));
+        inputDialog.setLabelText(tr("<span style='font-size:14pt; font-weight:bold; color:green;'>测试正常！请扫描设备SN:</span>"));
+        inputDialog.setStyleSheet("QInputDialog { background-color: #ddffdd; }");
+    } else {
+        inputDialog.setWindowTitle(tr("扫描SN"));
+        inputDialog.setLabelText(tr("请输入设备SN:"));
+    }
+    inputDialog.setTextEchoMode(QLineEdit::Normal);
     do {
-        text = QInputDialog::getText(this, tr("扫描SN"),
-                                     tr("请输入设备SN:"), QLineEdit::Normal,
-                                     "", &ok);
-        
+        ok = inputDialog.exec();
+        text = inputDialog.textValue();
         if (!ok) {
             allowEnterToStartTest = true;
             return;
         }
-        
     } while (!text.startsWith("LS") && text != "123");
-    
     deviceSN = text;
-    
-    this->setWindowTitle(QString("测试工具 - SN: %1").arg(deviceSN));
-    
+    deviceId_ = "";
+    this->setWindowTitle( Title_test + QString(" - SN: %1").arg(deviceSN));
     QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(0, 5));
     if (resultCombo) {
         QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(0, 3));
@@ -895,47 +880,114 @@ void MainWindow::showSNInputDialog()
             contentEdit->setText(deviceSN);
         }
     }
-    
-    QMessageBox confirmBox;
-    confirmBox.setWindowTitle("===确认测试====");
-    confirmBox.setText(QString("SN已输入: %1\n准备开始测试?").arg(deviceSN));
-    confirmBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-    confirmBox.setDefaultButton(QMessageBox::Ok);
-    
-    confirmBox.setButtonText(QMessageBox::Ok, "开始测试");
-    confirmBox.setButtonText(QMessageBox::Cancel, "取消测试");
-    
-    int ret = confirmBox.exec();
-    
-    allowEnterToStartTest = true;
-    
-    if (ret == QMessageBox::Ok) {
-        QTimer::singleShot(100, this, [this]() {
-            start_test_content();
-        });
-    } else {
-        QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(0, 3));
-        if (contentEdit) {
-            contentEdit->setText("");
+    QTimer::singleShot(1000, this, [this, hasAbnormalTest, hasNormalTest]() {
+        QMessageBox confirmBox;
+        confirmBox.setWindowTitle("===确认测试====");
+        if (hasAbnormalTest) {
+            confirmBox.setText(QString("警告：存在测试异常项！\nSN已输入: %1\n准备开始测试?").arg(deviceSN));
+            confirmBox.setStyleSheet("QMessageBox { background-color: #ffdddd; }"
+                                   "QLabel { color: red; font-weight: bold; font-size: 14pt; }");
+        } else if (hasNormalTest) {
+            confirmBox.setText(QString("测试正常完成！\nSN已输入: %1\n准备开始测试?").arg(deviceSN));
+            confirmBox.setStyleSheet("QMessageBox { background-color: #ddffdd; }"
+                                   "QLabel { color: green; font-weight: bold; font-size: 14pt; }");
+        } else {
+            confirmBox.setText(QString("SN已输入: %1\n准备开始测试?").arg(deviceSN));
         }
-        
-        QTimer::singleShot(100, this, [this]() {
-            showSNInputDialog();
-        });
-    }
+        confirmBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+        confirmBox.setDefaultButton(QMessageBox::Ok);
+        confirmBox.setButtonText(QMessageBox::Ok, "开始测试");
+        confirmBox.setButtonText(QMessageBox::Cancel, "取消测试");
+        int ret = confirmBox.exec();
+        allowEnterToStartTest = true;
+        if (ret == QMessageBox::Ok) {
+            QTimer::singleShot(100, this, [this]() {
+                start_test_content();
+            });
+        } else {
+            QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(0, 3));
+            if (contentEdit) {
+                contentEdit->setText("");
+            }
+            QTimer::singleShot(100, this, [this]() {
+                showSNInputDialog();
+            });
+        }
+    });
 }
+
+bool MainWindow::runMysqlQuery(const QString &sn, const QString &site, const QString &result, 
+    const QString &chipid, const QString &log1, const QString &log2, const QString &log3, 
+    QString &output)
+{
+    QString currentDir = QCoreApplication::applicationDirPath();
+    QString mysqlPath = QDir::cleanPath(currentDir + "/test_mysql.exe");
+    QString logJson = QString("{\"log1\":\"%1\",\"log2\":\"%2\",\"log3\":\"%3\"}")
+                        .arg(log1)
+                        .arg(log2)
+                        .arg(log3);
+
+
+    QStringList arguments;
+    arguments << "insert" << sn << site << result << chipid << logJson;
+    QString command = QString("%1 %2").arg(mysqlPath).arg(arguments.join(" "));
+    QProcess process;
+    process.start(mysqlPath, arguments);
+    if (!process.waitForStarted(5000)) {
+    output = "启动test_mysql进程失败";
+    return false;
+    }
+    if (!process.waitForFinished(180000)) {
+    output = "执行test_mysql命令超时";
+    process.kill();
+    return false;
+    }
+    QString stdOut = QString::fromLocal8Bit(process.readAllStandardOutput());
+    QString stdErr = QString::fromLocal8Bit(process.readAllStandardError());
+    output = stdOut;
+    if (!stdErr.isEmpty()) {
+    output += "\n" + stdErr;
+    }
+
+    bool success = (process.exitCode() == 0);
+    return success;
+}
+
+
+
 
 
 void MainWindow::saveTestLog()
 {
 
-    QDir logsDir("./logs/test_log");
+    bool hasAbnormalTest = false;
+    bool hasNormalTest = false;
+    for (int row = 0; row < table_widget->rowCount(); ++row) {
+        QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
+        if (resultCombo) {
+            if (resultCombo->currentIndex() == 2) { // 2表示"异常"
+                hasAbnormalTest = true;
+                break;
+            } else if (resultCombo->currentIndex() == 1) { // 1表示"正常"
+                hasNormalTest = true;
+            }
+        }
+    }
+    QString logDirPath;
+    if (hasAbnormalTest) {
+        logDirPath = "./logs/test_log/异常";
+    } else if (hasNormalTest) {
+        logDirPath = "./logs/test_log/正常";
+    } else {
+        logDirPath = "./logs/test_log";  // 默认路径，未测试或其他情况
+    }
+    QDir logsDir(logDirPath);
     if (!logsDir.exists()) {
         logsDir.mkpath(".");
     }
     QString currentTime = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss");
-
-    QString fileName = QString("./logs/test_log/%1_%2_%3.txt")
+    QString fileName = QString("%1/%2_%3_%4.txt")
+                          .arg(logDirPath)
                           .arg(currentTime)
                           .arg(deviceSN.isEmpty() ? "NoSN" : deviceSN)
                           .arg(deviceId_.isEmpty() ? "NoDeviceID" : deviceId_);
@@ -945,10 +997,10 @@ void MainWindow::saveTestLog()
         QTextStream stream(&logFile);
         stream.setCodec("UTF-8");
         stream.setGenerateByteOrderMark(true); 
-
         stream << "Test Time: " << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss") << "\n";
         stream << "Device SN: " << (deviceSN.isEmpty() ? "Not specified" : deviceSN) << "\n";
         stream << "Device ID: " << (deviceId_.isEmpty() ? "Not specified" : deviceId_) << "\n";
+        stream << "Test Result: " << (hasAbnormalTest ? "Abnormal" : (hasNormalTest ? "Normal" : "Not tested")) << "\n";
         stream << "====================================\n\n";
         stream << "Table Content:\n";
         stream << "-----------------------------------\n";
@@ -961,7 +1013,6 @@ void MainWindow::saveTestLog()
         stream << headers.join("\t") << "\n";
         for (int row = 0; row < table_widget->rowCount(); ++row) {
             QStringList rowData;
-            
             for (int col = 0; col < table_widget->columnCount(); ++col) {
                 if (!table_widget->isColumnHidden(col)) {
                     QString cellContent;
@@ -978,17 +1029,12 @@ void MainWindow::saveTestLog()
                             cellContent = QString::number(progressBar->value()) + "%";
                         }
                     }
-                    
                     rowData << cellContent;
                 }
             }
-            
             stream << rowData.join("\t") << "\n";
         }
-        
         stream << "\n====================================\n\n";
-        
-        
         stream << "Test Log:\n";
         stream << "-----------------------------------\n";
         stream << show_log->toPlainText();
@@ -999,6 +1045,65 @@ void MainWindow::saveTestLog()
     } else {
         show_log->append(QString("无法创建日志文件: %1").arg(fileName));
     }
+
+
+    if (Connect_Internet== "Y") {
+        QString rawLog = show_log->toPlainText();
+        QString log1 = rawLog;
+
+        log1.replace("\\", "\\\\"); // 将反斜杠替换为两个反斜杠
+        log1.replace('"', '\\"'); // 将双引号转义
+        log1.replace('\n', "@"); // 换行符替换为@@@分隔符
+        log1.replace('\r', ""); // 移除回车符
+        log1.replace('\t', " "); // 制表符替换为空格
+        for (int i = 0; i < 32; ++i) {
+            log1.replace(QChar(i), " ");
+        }
+
+        QString log2;
+        QStringList headerList;
+        for (int col = 0; col < table_widget->columnCount(); ++col) {
+            if (!table_widget->isColumnHidden(col)) {
+                headerList << table_widget->horizontalHeaderItem(col)->text();
+            }
+        }
+        log2 = headerList.join("|") + "@";
+        
+        for (int row = 0; row < table_widget->rowCount(); ++row) {
+            QStringList rowDataList;
+            for (int col = 0; col < table_widget->columnCount(); ++col) {
+                if (!table_widget->isColumnHidden(col)) {
+                    QString cellContent;
+                    QTableWidgetItem* item = table_widget->item(row, col);
+                    if (item) {
+                        cellContent = item->text();
+                    } else {
+                        QWidget* widget = table_widget->cellWidget(row, col);
+                        if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(widget)) {
+                            cellContent = lineEdit->text();
+                        } else if (QComboBox* comboBox = qobject_cast<QComboBox*>(widget)) {
+                            cellContent = comboBox->currentText();
+                        } else if (QProgressBar* progressBar = qobject_cast<QProgressBar*>(widget)) {
+                            cellContent = QString::number(progressBar->value()) + "%";
+                        }
+                    }
+                    rowDataList << cellContent;
+                }
+            }
+            log2 += rowDataList.join("|") + "@";
+        }
+        QString log3 = "";
+        
+        QString output;
+        if (!runMysqlQuery(deviceSN.isEmpty() ? "NoSN" : deviceSN, "3", "PASS", deviceId_.isEmpty() ? "NoDeviceID" : deviceId_, log1, log2, log3, output)) {
+            show_log->append(QString("执行失败： %1").arg(output));
+        } else {
+            show_log->append(QString("执行成功，输出： %1").arg(output));
+        }
+    }
+
+
+
 }
 
 
@@ -1016,9 +1121,78 @@ void MainWindow::recordSNDeviceID()
     if (recordFile.open(QIODevice::Append | QIODevice::Text)) {
         QTextStream stream(&recordFile);
         stream.setCodec("UTF-8");
-
         stream << currentTime << "     SN:" << deviceSN << "     DeviceID:" << deviceId_ << "\n";
-
         recordFile.close();
     }
+}
+
+bool MainWindow::runIperfCommand(const QString &ipAddress, int port, int interval, int duration, QString &output)
+{
+    QString currentDir = QCoreApplication::applicationDirPath();
+    QString iperfPath = QDir::cleanPath(currentDir + "/iperf.exe");
+    
+    // 构造命令行
+    QString command = QString("\"%1\" -c %2 -p %3 -i %4 -t %5")
+                        .arg(iperfPath)
+                        .arg(ipAddress)
+                        .arg(port)
+                        .arg(interval)
+                        .arg(duration);
+    
+    QProcess process;
+    show_log->append("===CMD=====" + command);
+    process.start(command);
+    if (!process.waitForStarted(5000)) {
+        output = "启动 iperf 进程失败"+ process.errorString();
+        return false;
+    }
+    if (!process.waitForFinished(180000)) {
+        output = "执行 iperf 命令超时";
+        process.kill();
+        return false;
+    }
+    
+    QString stdOut = QString::fromLocal8Bit(process.readAllStandardOutput());
+    QString stdErr = QString::fromLocal8Bit(process.readAllStandardError());
+    output = stdOut;
+    
+    if (!stdErr.isEmpty()) {
+        output += "\n" + stdErr;
+    }
+    
+    bool success = (process.exitCode() == 0);
+    return success;  
+}
+void MainWindow::updateipValue_(const QString &ipresult,int row ,int testtime)
+{
+    bool shellSuccess = false;
+    QLineEdit *contentEdit = qobject_cast<QLineEdit*>(table_widget->cellWidget(row, 3));
+
+    QComboBox *resultCombo = qobject_cast<QComboBox*>(table_widget->cellWidget(row, 5));
+
+    ipValue = ipresult;
+    QString output;
+    if (runIperfCommand(ipValue, 5001, 1, testtime, output)) {
+        show_log->append("iperf 命令执行成功，输出：" + output);
+        QRegularExpression regex(R"((\d+\.\d+)\s*Mbits\/sec)");
+        QRegularExpressionMatchIterator i = regex.globalMatch(output);
+        QString lastBandwidth; 
+        while (i.hasNext()) {
+            QRegularExpressionMatch match = i.next();
+            lastBandwidth = match.captured(1); 
+        }
+        if (!lastBandwidth.isEmpty()) {
+            show_log->append("iperf 命令执行成功，输出：" + lastBandwidth + "Mbits/s");
+            contentEdit->setText(" iperf_server ： " + lastBandwidth + "Mbits/s");
+            if(lastBandwidth.toFloat()>=10){
+                shellSuccess=true;
+            }
+        }
+        else{
+            show_log->append("iperf 命令执行失败，错误信息：");
+        }
+    } else {
+        show_log->append("iperf 命令执行失败，错误信息：" + output);
+    }
+    resultCombo->setCurrentIndex(shellSuccess ? 1 : 2);
 }

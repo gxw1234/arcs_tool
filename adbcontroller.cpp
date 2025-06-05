@@ -240,11 +240,7 @@ QString ADBController::executeShellCommand(const QString &command, bool *success
     QString output;
     bool foundReturn = false;
     int maxWaitTime = 10; // 最长等待时间（秒）
-    
-    // 记录开始时间
     QTime startTime = QTime::currentTime();
-    
-    // 循环读取输出，直到进程结束或超时
     while (process.state() != QProcess::NotRunning) {
         // 检查是否超时
         if (startTime.secsTo(QTime::currentTime()) > maxWaitTime) {
@@ -267,25 +263,16 @@ QString ADBController::executeShellCommand(const QString &command, bool *success
                     process.kill();
                 }
             }
-            
             output += "\n[命令执行超时，已强制终止]";
             break;
         }
-        
-        
         if (process.waitForReadyRead(100)) {
             QByteArray newData = process.readAll();
             QString newOutput = QString::fromUtf8(newData);
             output += newOutput;
-            
-            
             if (newOutput.contains("Return")) {
                 qDebug() << "发现Return关键字，等待200ms后终止";
-                
-                
                 QThread::msleep(200);
-                
-                
                 QByteArray ctrlC;
                 ctrlC.append('\x03');
                 process.write(ctrlC);

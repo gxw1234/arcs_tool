@@ -29,9 +29,13 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    
-    // 事件过滤器，用于捕获回车键
+
     bool eventFilter(QObject *watched, QEvent *event) override;
+    bool runMysqlQuery(const QString &sn, const QString &site, const QString &result, 
+        const QString &chipid, const QString &log1, const QString &log2, const QString &log3, 
+        QString &output);
+    bool runIperfCommand(const QString &ipAddress, int port, int interval, int duration, QString &output);
+        
 
 private slots:
     void updateTime();
@@ -49,7 +53,8 @@ private slots:
     void onTestSoftReset(int row, bool on); // 处理软复位结果
     void updatedeviceId(const QString &deviceId); // 处理设备ID
     void showSNInputDialog(); // 显示SN扫描对话框
-
+    void updateTestContent_(int row, const QString &content); // 处理测试内容更新
+    void updateipValue_(const QString &ipresult,int row ,int testtime); 
 private:
     void setupUi();
     void setupUi_();
@@ -60,61 +65,52 @@ private:
     
 private:
 
-
-    // UI 组件
     QWidget *centralWidget;
     QLabel *timeLabel;
     QLabel *statusLabel;
-    
-    // SmartPower 控制组件
+
     QGroupBox *deviceGroupBox;
     QPushButton *connectButton;
     QLabel *deviceCountLabel;
-    
     QGroupBox *controlGroupBox;
     QLineEdit *voltageEdit;
     QLineEdit *currentEdit;
     QPushButton *outputOnButton;
     QPushButton *outputOffButton;
-    
     QGroupBox *statusGroupBox;
     QLabel *voltageLabel;
     QLabel *currentLabel;
     QLabel *bncLabel;
-    
-    
     QTimer *statusTimer;
     SmartPowerController *powerController;
     QTableWidget *table_widget;
     QPushButton *start_test;
     QTextEdit *show_log;
     TestThread *test_thread;
-    
-    // BLU设备相关
+
     BLUSerial *bluSerial;
     BLUProtocol *bluProtocol;
     QString bluComPort;
+    QString Connect_Internet;
+    QString Checkpoint;
     QString snopne;
     int bluVoltageValue;
-    
-    // 配置文件读取的串口信息
+
     QString burnComPort;   // 烧录使用的COM口
-    
-    // 关闭测试会话
+
     void closeTestSession();
-    
-    // 上电时间记录
+
     QDateTime powerOnTime;
     QDateTime firstResponseTime;
     bool hasReceivedFirstResponse;
-    
-    // 设备SN信息
+
     QString deviceSN;
-    
-    // 用于软复位测试的数据存储
     QString serialReceivedData;
-    QString Title_test = "test_tool 1.1";
+    QString Title_test = "test_tool 1.4.2";
     QString deviceId_;
+    QString ipValue;
+
+
     bool allowEnterToStartTest; // 控制回车键是否触发测试
 };
 

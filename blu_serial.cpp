@@ -24,7 +24,6 @@ BLUSerial::~BLUSerial()
     if (m_connected) {
         closePort();
     }
-    
     // m_serialPort会由Qt的父子对象系统自动删除
 }
 

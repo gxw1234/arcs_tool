@@ -2,8 +2,11 @@ QT       += core gui serialport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 DESTDIR = $$PWD/bin
-TARGET = SimpleQtApp
+TARGET = ARCS_Tool
 TEMPLATE = app
+
+# 添加应用程序图标
+win32:RC_FILE = app_icon.rc
 
 # 添加SmartPower库支持
 LIBS += -L$$PWD/lib -lSmartPower
@@ -25,5 +28,3 @@ HEADERS += \
     blu_serial.h \
     blu_protocol.h \
     adbcontroller.h
-
-

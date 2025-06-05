@@ -1,1 +1,1 @@
-windeployqt D:\py\qtqbj\bin\test_tool.exe
+windeployqt D:\py\qtqbj\bin\SimpleQtApp.exe

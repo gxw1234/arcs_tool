@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_MainWindow_t {
-    QByteArrayData data[22];
-    char stringdata0[314];
+    QByteArrayData data[27];
+    char stringdata0[374];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -52,7 +52,12 @@ QT_MOC_LITERAL(17, 248, 7), // "voltage"
 QT_MOC_LITERAL(18, 256, 15), // "onTestSoftReset"
 QT_MOC_LITERAL(19, 272, 14), // "updatedeviceId"
 QT_MOC_LITERAL(20, 287, 8), // "deviceId"
-QT_MOC_LITERAL(21, 296, 17) // "showSNInputDialog"
+QT_MOC_LITERAL(21, 296, 17), // "showSNInputDialog"
+QT_MOC_LITERAL(22, 314, 18), // "updateTestContent_"
+QT_MOC_LITERAL(23, 333, 7), // "content"
+QT_MOC_LITERAL(24, 341, 14), // "updateipValue_"
+QT_MOC_LITERAL(25, 356, 8), // "ipresult"
+QT_MOC_LITERAL(26, 365, 8) // "testtime"
 
     },
     "MainWindow\0updateTime\0\0onConnectButtonClicked\0"
@@ -63,7 +68,9 @@ QT_MOC_LITERAL(21, 296, 17) // "showSNInputDialog"
     "start_test_content\0resetTable\0"
     "onTestBootTime\0row\0on\0voltage\0"
     "onTestSoftReset\0updatedeviceId\0deviceId\0"
-    "showSNInputDialog"
+    "showSNInputDialog\0updateTestContent_\0"
+    "content\0updateipValue_\0ipresult\0"
+    "testtime"
 };
 #undef QT_MOC_LITERAL
 
@@ -73,7 +80,7 @@ static const uint qt_meta_data_MainWindow[] = {
        8,       // revision
        0,       // classname
        0,    0, // classinfo
-      16,   14, // methods
+      18,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -81,22 +88,24 @@ static const uint qt_meta_data_MainWindow[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,   94,    2, 0x08 /* Private */,
-       3,    0,   95,    2, 0x08 /* Private */,
-       4,    0,   96,    2, 0x08 /* Private */,
-       5,    0,   97,    2, 0x08 /* Private */,
-       6,    0,   98,    2, 0x08 /* Private */,
-       7,    1,   99,    2, 0x08 /* Private */,
-       9,    1,  102,    2, 0x08 /* Private */,
-      10,    0,  105,    2, 0x08 /* Private */,
-      11,    0,  106,    2, 0x08 /* Private */,
-      12,    0,  107,    2, 0x08 /* Private */,
-      13,    0,  108,    2, 0x08 /* Private */,
-      14,    3,  109,    2, 0x08 /* Private */,
-      14,    2,  116,    2, 0x28 /* Private | MethodCloned */,
-      18,    2,  121,    2, 0x08 /* Private */,
-      19,    1,  126,    2, 0x08 /* Private */,
-      21,    0,  129,    2, 0x08 /* Private */,
+       1,    0,  104,    2, 0x08 /* Private */,
+       3,    0,  105,    2, 0x08 /* Private */,
+       4,    0,  106,    2, 0x08 /* Private */,
+       5,    0,  107,    2, 0x08 /* Private */,
+       6,    0,  108,    2, 0x08 /* Private */,
+       7,    1,  109,    2, 0x08 /* Private */,
+       9,    1,  112,    2, 0x08 /* Private */,
+      10,    0,  115,    2, 0x08 /* Private */,
+      11,    0,  116,    2, 0x08 /* Private */,
+      12,    0,  117,    2, 0x08 /* Private */,
+      13,    0,  118,    2, 0x08 /* Private */,
+      14,    3,  119,    2, 0x08 /* Private */,
+      14,    2,  126,    2, 0x28 /* Private | MethodCloned */,
+      18,    2,  131,    2, 0x08 /* Private */,
+      19,    1,  136,    2, 0x08 /* Private */,
+      21,    0,  139,    2, 0x08 /* Private */,
+      22,    2,  140,    2, 0x08 /* Private */,
+      24,    3,  145,    2, 0x08 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -115,6 +124,8 @@ static const uint qt_meta_data_MainWindow[] = {
     QMetaType::Void, QMetaType::Int, QMetaType::Bool,   15,   16,
     QMetaType::Void, QMetaType::QString,   20,
     QMetaType::Void,
+    QMetaType::Void, QMetaType::Int, QMetaType::QString,   15,   23,
+    QMetaType::Void, QMetaType::QString, QMetaType::Int, QMetaType::Int,   25,   15,   26,
 
        0        // eod
 };
@@ -141,6 +152,8 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 13: _t->onTestSoftReset((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< bool(*)>(_a[2]))); break;
         case 14: _t->updatedeviceId((*reinterpret_cast< const QString(*)>(_a[1]))); break;
         case 15: _t->showSNInputDialog(); break;
+        case 16: _t->updateTestContent_((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 17: _t->updateipValue_((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3]))); break;
         default: ;
         }
     }
@@ -175,13 +188,13 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 16)
+        if (_id < 18)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 16;
+        _id -= 18;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 16)
+        if (_id < 18)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 16;
+        _id -= 18;
     }
     return _id;
 }

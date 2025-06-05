@@ -1,0 +1,64 @@
+﻿Test Time: 2025-06-05 17:50:46
+Device SN: LS33356
+Device ID: Not specified
+Test Result: Abnormal
+====================================
+
+Table Content:
+-----------------------------------
+测试项目	测试模式	测试内容	进度	结果	备注
+ 扫码SN	 自动	LS33356	100%	异常	
+ 连接网络	 自动	连接失败	100%	异常	
+ iperf_server测试	 自动	iperf_server  IP：未找到	100%	异常	
+ 设备复位	 自动	软复位成功	100%	异常	
+ 连接网络	 自动	连接失败	100%	异常	
+ iperf_client测试	 自动		0%	未测试	
+
+====================================
+
+Test Log:
+-----------------------------------
+表格已复位到初始状态
+连接BLU设备...
+设备连接成功
+读取设备元数据失败，使用默认值
+已切换到源表模式
+已设置源电压为 4V
+已打开DUT电源
+创建测试线程...
+测试线程已启动，请等待...
+com COM26==================
+自动化测试开始
+开始测试行 0 (ID: scan_sn): 扫码SN
+================== scan_sn==================
+===CMD====="D:/py/qtqbj/bin/test_mysql.exe" query LS33356
+未找到Site值
+查询结果: 连接或操作失败: (2003, "Can't connect to MySQL server on '192.168.32.130' (timed out)")
+====
+开始测试行 1 (ID: wifi_connect): 连接网络
+================== wifi_connect==================
+命令输出: 
+error: closed
+
+开始测试行 2 (ID: iperf_server): iperf_server测试
+================== iperf_server==================
+命令输出: 
+adb.exe: no devices/emulators found
+
+开始测试行 3 (ID: reset): 设备复位
+================== reset==================
+正在软复位...
+命令输出: 
+adb.exe: no devices/emulators found
+
+开始测试行 4 (ID: wifi_connect): 连接网络
+================== wifi_connect==================
+命令输出: 
+adb.exe: no devices/emulators found
+
+开始测试行 5 (ID: iperf_client): iperf_client测试
+================== iperf_client==================
+所有测试已完成
+测试线程已完成
+关闭DUT电源
+测试完成

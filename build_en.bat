@@ -24,14 +24,14 @@ echo Step 2: Compiling application...
 mingw32-make clean
 mingw32-make -f Makefile.Release
 
-if not exist bin\SimpleQtApp.exe (
+if not exist bin\ARCS_Tool.exe (
     echo ERROR: Compilation failed!
     goto ERROR
 )
 
 echo.
 echo Step 3: Deploying Qt dependencies...
-windeployqt bin\SimpleQtApp.exe
+windeployqt bin\ARCS_Tool.exe
 
 echo.
 echo =================================================
@@ -39,7 +39,7 @@ echo           Build and deployment completed!
 echo =================================================
 echo.
 echo You can now run the application:
-echo   bin\SimpleQtApp.exe
+echo   bin\ARCS_Tool.exe
 echo.
 
 goto END
